@@ -5,6 +5,13 @@ All notable changes to **FlashText Search** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.3] - 2026-08-29
+
+### Fixed
+- **Synchronized Package Versioning**: Fixed an issue where `Cargo.toml` compile-time package version was out of sync, preventing repeated update prompts.
+
+---
+
 ## [v0.4.2] - 2026-08-29
 
 ### Fixed & Architecture
