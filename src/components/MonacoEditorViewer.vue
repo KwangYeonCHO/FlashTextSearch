@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full w-full relative flex flex-col bg-[#0b101b] overflow-hidden">
+  <div class="h-full w-full relative flex flex-col overflow-hidden" style="background-color: var(--bg-editor)">
     <!-- Monaco 容器 -->
     <div ref="editorContainer" class="h-full w-full"></div>
   </div>
@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import * as monaco from "monaco-editor";
+import { currentTheme } from "../theme";
 
 const props = defineProps<{
   content: string;
@@ -20,6 +21,8 @@ const props = defineProps<{
 const editorContainer = ref<HTMLElement | null>(null);
 let editorInstance: monaco.editor.IStandaloneCodeEditor | null = null;
 let currentDecorations: string[] = [];
+
+const getMonacoTheme = () => (currentTheme.value === "light-crisp" ? "vs" : "vs-dark");
 
 // 根据后缀映射 Monaco 语言标识
 const detectLanguage = (path: string): string => {
@@ -73,7 +76,7 @@ onMounted(() => {
   editorInstance = monaco.editor.create(editorContainer.value, {
     value: props.content,
     language: detectLanguage(props.filePath),
-    theme: "vs-dark",
+    theme: getMonacoTheme(),
     readOnly: true,
     automaticLayout: true,
     fontSize: 13,
@@ -93,6 +96,14 @@ onMounted(() => {
     jumpToTarget(props.targetLine, props.matchStart, props.matchEnd);
   }
 });
+
+// 监听主题切换，动态刷新 Monaco 颜色
+watch(
+  () => currentTheme.value,
+  () => {
+    monaco.editor.setTheme(getMonacoTheme());
+  }
+);
 
 // 跳转到目标行并高亮
 const jumpToTarget = (line: number, startChar?: number, endChar?: number) => {

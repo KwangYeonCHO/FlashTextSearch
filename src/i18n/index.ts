@@ -66,6 +66,11 @@ export interface TranslationDictionary {
   themeObsidianGold: string;
   themeLightCrisp: string;
   language: string;
+  searchHistory: string;
+  folderHistory: string;
+  clearAll: string;
+  noHistory: string;
+  deleteItem: string;
 }
 
 export const translations: Record<LanguageKey, TranslationDictionary> = {
@@ -133,6 +138,11 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
     themeObsidianGold: "黑曜金奢 (Obsidian Gold)",
     themeLightCrisp: "晨曦素雅 (Light Crisp)",
     language: "语言",
+    searchHistory: "搜索内容历史",
+    folderHistory: "搜索目录历史",
+    clearAll: "清空全部",
+    noHistory: "暂无历史记录",
+    deleteItem: "删除此条记录",
   },
   ko: {
     appTitle: "FlashText Search",
@@ -198,6 +208,11 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
     themeObsidianGold: "옵시디언 골드 (Obsidian Gold)",
     themeLightCrisp: "라이트 크리스프 (Light Crisp)",
     language: "언어",
+    searchHistory: "검색어 기록",
+    folderHistory: "폴더 기록",
+    clearAll: "모두 지우기",
+    noHistory: "검색 기록이 없습니다",
+    deleteItem: "이 기록 삭제",
   },
   en: {
     appTitle: "FlashText Search",
@@ -263,6 +278,11 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
     themeObsidianGold: "Obsidian Gold",
     themeLightCrisp: "Light Crisp",
     language: "Language",
+    searchHistory: "Search History",
+    folderHistory: "Folder History",
+    clearAll: "Clear All",
+    noHistory: "No history records",
+    deleteItem: "Delete this record",
   },
 };
 

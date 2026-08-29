@@ -1,37 +1,44 @@
 <template>
-  <div class="h-full w-full flex flex-col bg-[#0b101b] overflow-hidden text-xs">
+  <div class="h-full w-full flex flex-col overflow-hidden text-xs" style="background-color: var(--bg-editor)">
     <!-- 工作表选项卡栏 (Sheet Tabs) -->
-    <div class="flex items-center gap-1 px-3 py-1.5 bg-slate-900 border-b border-white/10 shrink-0 overflow-x-auto">
+    <div
+      class="flex items-center gap-1 px-3 py-1.5 border-b shrink-0 overflow-x-auto"
+      style="background-color: var(--bg-surface); border-color: var(--border-subtle)"
+    >
       <button
         v-for="sheet in workbook.sheets"
         :key="sheet.sheetName"
         class="px-3 py-1 rounded-t-lg font-medium transition cursor-pointer flex items-center gap-1.5 shrink-0 border-t border-x"
-        :class="
+        :style="
           activeSheetName === sheet.sheetName
-            ? 'bg-slate-800 text-emerald-300 border-emerald-500/50 shadow'
-            : 'bg-slate-900/60 text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
+            ? 'background-color: var(--bg-card); color: #059669; border-color: rgba(16, 185, 129, 0.4); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'
+            : 'background-color: transparent; color: var(--text-muted); border-color: transparent;'
         "
         @click="activeSheetName = sheet.sheetName"
       >
         <SheetIcon class="w-3.5 h-3.5" />
         <span>{{ sheet.sheetName }}</span>
-        <span class="text-[10px] text-slate-500">({{ sheet.totalRows }} {{ t.sheetRows }})</span>
+        <span class="text-[10px] opacity-70">({{ sheet.totalRows }} {{ t.sheetRows }})</span>
       </button>
     </div>
 
     <!-- 表格滚动视图 -->
-    <div ref="tableContainer" class="flex-1 overflow-auto bg-slate-950/80">
-      <table v-if="currentSheet" class="border-collapse w-full table-fixed text-slate-300 font-mono select-text">
+    <div ref="tableContainer" class="flex-1 overflow-auto" style="background-color: var(--bg-editor)">
+      <table v-if="currentSheet" class="border-collapse w-full table-fixed font-mono select-text" style="color: var(--text-body)">
         <!-- 列头 (A, B, C, D...) -->
-        <thead class="sticky top-0 z-10 bg-slate-900 shadow-sm">
+        <thead class="sticky top-0 z-10 shadow-xs" style="background-color: var(--bg-table-th)">
           <tr>
-            <th class="w-12 py-1.5 px-2 bg-slate-900 border border-slate-800 text-slate-500 text-center font-normal sticky left-0 z-20">
+            <th
+              class="w-12 py-1.5 px-2 border text-center font-semibold sticky left-0 z-20"
+              style="background-color: var(--bg-table-th); border-color: var(--border-table); color: var(--text-muted)"
+            >
               #
             </th>
             <th
               v-for="colIdx in currentSheet.maxCols"
               :key="colIdx"
-              class="w-32 py-1.5 px-2 bg-slate-900 border border-slate-800 text-slate-400 text-center font-medium truncate"
+              class="w-32 py-1.5 px-2 border text-center font-semibold truncate"
+              style="background-color: var(--bg-table-th); border-color: var(--border-table); color: var(--text-title)"
             >
               {{ getColumnLetter(colIdx - 1) }}
             </th>
@@ -44,14 +51,16 @@
             v-for="(row, rowIdx) in currentSheet.rows"
             :id="`excel-row-${rowIdx + 1}`"
             :key="rowIdx"
-            class="hover:bg-slate-800/30 transition-colors"
+            class="hover:opacity-90 transition-colors"
           >
             <!-- 行号列 (1, 2, 3...) -->
             <td
-              class="py-1 px-2 bg-slate-900/90 border border-slate-800 text-slate-500 text-center font-normal sticky left-0 z-10 select-none"
-              :class="{
-                'bg-amber-500/20 text-amber-300 font-bold': targetRow === rowIdx + 1
-              }"
+              class="py-1 px-2 border text-center font-normal sticky left-0 z-10 select-none"
+              :style="
+                targetRow === rowIdx + 1
+                  ? 'background-color: #fef3c7; color: #b45309; font-weight: 700; border-color: var(--border-table);'
+                  : 'background-color: var(--bg-table-th); color: var(--text-muted); border-color: var(--border-table);'
+              "
             >
               {{ rowIdx + 1 }}
             </td>
@@ -60,7 +69,12 @@
             <td
               v-for="colIdx in currentSheet.maxCols"
               :key="colIdx"
-              class="py-1.5 px-2 border border-slate-800/80 truncate transition-all max-w-[200px]"
+              class="py-1.5 px-2 border truncate transition-all max-w-[200px]"
+              :style="{
+                backgroundColor: 'var(--bg-table-td)',
+                borderColor: 'var(--border-table)',
+                color: 'var(--text-body)',
+              }"
               :class="{
                 'table-active-cell': isTargetCell(rowIdx + 1, colIdx)
               }"
@@ -73,7 +87,7 @@
       </table>
 
       <!-- 空表格提示 -->
-      <div v-else class="h-full flex items-center justify-center text-slate-500">
+      <div v-else class="h-full flex items-center justify-center" style="color: var(--text-muted)">
         {{ t.noSheetData }}
       </div>
     </div>

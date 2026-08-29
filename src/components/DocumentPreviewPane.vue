@@ -1,35 +1,38 @@
 <template>
-  <div class="h-full flex flex-col glass-panel overflow-hidden bg-[var(--bg-editor)]">
+  <div class="h-full flex flex-col glass-panel overflow-hidden" style="background-color: var(--bg-editor)">
     <!-- 预览区顶部工具栏 -->
     <div
       v-if="selectedFile"
-      class="px-4 py-2.5 bg-slate-900/90 border-b border-white/10 shrink-0 flex flex-wrap items-center justify-between gap-2 shadow-sm"
+      class="px-4 py-2.5 border-b shrink-0 flex flex-wrap items-center justify-between gap-2 shadow-xs"
+      style="background-color: var(--bg-surface); border-color: var(--border-subtle)"
     >
       <!-- 文件名与详细信息 -->
       <div class="flex items-center gap-2.5 overflow-hidden flex-1 min-w-[200px]">
         <component
           :is="getFileIcon(selectedFile.extension)"
-          class="w-4 h-4 shrink-0 text-sky-400"
+          class="w-4 h-4 shrink-0 text-sky-500"
         />
         <div class="overflow-hidden">
           <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-slate-100 truncate" :title="selectedFile.fileName">
+            <span class="text-xs font-bold truncate" style="color: var(--text-title)" :title="selectedFile.fileName">
               {{ selectedFile.fileName }}
             </span>
             <span
               v-if="textContent?.encoding"
-              class="text-[10px] px-1.5 py-0.2 bg-slate-800 text-slate-400 border border-slate-700 rounded font-mono shrink-0"
+              class="text-[10px] px-1.5 py-0.2 rounded font-mono shrink-0 border"
+              style="background-color: var(--bg-card); color: var(--text-muted); border-color: var(--border-subtle)"
             >
               {{ textContent.encoding }}
             </span>
             <span
               v-if="textContent?.isTruncated"
-              class="text-[10px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded font-medium shrink-0"
+              class="text-[10px] px-1.5 py-0.2 rounded font-medium shrink-0 border"
+              style="background-color: rgba(245, 158, 11, 0.15); color: #d97706; border-color: rgba(245, 158, 11, 0.3)"
             >
               {{ t.truncatedNotice }}
             </span>
           </div>
-          <div class="text-[10px] text-slate-500 truncate" :title="selectedFile.filePath">
+          <div class="text-[10px] truncate" style="color: var(--text-muted)" :title="selectedFile.filePath">
             {{ selectedFile.filePath }}
           </div>
         </div>
@@ -38,11 +41,12 @@
       <!-- 多匹配项快速跳转导航条 (Next / Prev 按键) -->
       <div
         v-if="selectedFile.matches.length > 0"
-        class="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-xl border border-slate-700/60 shadow-inner"
+        class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shadow-inner"
+        style="background-color: var(--bg-card); border-color: var(--border-subtle)"
       >
-        <span class="text-[11px] text-slate-400 font-medium">
+        <span class="text-[11px] font-medium" style="color: var(--text-muted)">
           {{ t.matchIndex }}
-          <span class="text-amber-400 font-bold font-mono">
+          <span class="font-bold font-mono text-amber-500">
             {{ activeMatchIndex }}
           </span>
           / {{ selectedFile.matches.length }}
@@ -50,7 +54,8 @@
 
         <!-- 上一个匹配 (Shift+F3) -->
         <button
-          class="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+          class="p-1 rounded disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-black/10 dark:hover:bg-white/10"
+          style="color: var(--text-title)"
           :disabled="selectedFile.matches.length <= 1"
           :title="t.prevMatchTip"
           @click="jumpPrevMatch"
@@ -60,7 +65,8 @@
 
         <!-- 下一个匹配 (F3) -->
         <button
-          class="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+          class="p-1 rounded disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-black/10 dark:hover:bg-white/10"
+          style="color: var(--text-title)"
           :disabled="selectedFile.matches.length <= 1"
           :title="t.nextMatchTip"
           @click="jumpNextMatch"
@@ -72,20 +78,22 @@
       <!-- 外部原生操作快捷按钮 -->
       <div class="flex items-center gap-1.5 shrink-0">
         <button
-          class="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition flex items-center gap-1 cursor-pointer"
+          class="px-2.5 py-1 text-xs font-medium rounded-lg transition flex items-center gap-1 cursor-pointer border shadow-2xs"
+          style="background-color: var(--bg-card); color: var(--text-title); border-color: var(--border-subtle)"
           :title="t.locateInExplorer"
           @click="openInExplorer"
         >
-          <FolderSearch class="w-3.5 h-3.5 text-sky-400" />
+          <FolderSearch class="w-3.5 h-3.5 text-sky-500" />
           <span>{{ t.locateInExplorer }}</span>
         </button>
 
         <button
-          class="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition flex items-center gap-1 cursor-pointer"
+          class="px-2.5 py-1 text-xs font-medium rounded-lg transition flex items-center gap-1 cursor-pointer border shadow-2xs"
+          style="background-color: var(--bg-card); color: var(--text-title); border-color: var(--border-subtle)"
           :title="t.openWithApp"
           @click="openWithSystemApp"
         >
-          <ExternalLink class="w-3.5 h-3.5 text-emerald-400" />
+          <ExternalLink class="w-3.5 h-3.5 text-emerald-500" />
           <span>{{ t.openWithApp }}</span>
         </button>
       </div>
