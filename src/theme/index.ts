@@ -30,7 +30,7 @@ export const syncWindowAppearance = (theme?: ThemeKey, lang?: string) => {
     en: "Ultra-Fast Text & Document Search",
   };
 
-  const title = `FlashText Search v0.6.0 - ${subtitles[l] || subtitles.zh}`;
+  const title = `FlashText Search v0.6.1 - ${subtitles[l] || subtitles.zh}`;
   const themeMode = t === "light-crisp" ? "light" : "dark";
 
   invoke("update_window_theme_and_title", { theme: themeMode, title }).catch((err: any) => {

@@ -5,6 +5,15 @@ All notable changes to **FlashText Search** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.6.1] - 2026-08-29
+
+### Fixes & Native Window Controls
+- **100% Reliable Native Window Controls**: Replaced frontend window APIs with direct Rust backend invoke commands (`window_minimize`, `window_toggle_maximize`, `window_close`, `window_is_maximized`, `window_start_dragging`).
+- **Smooth Native Dragging**: Added dedicated `@mousedown` drag handler with native Windows WM drag loop and double-click to toggle maximize.
+- **Fixed Click Blocking**: Removed `data-tauri-drag-region` from button containers to ensure zero click event interception.
+
+---
+
 ## [v0.6.0] - 2026-08-29
 
 ### UI & Window Architecture

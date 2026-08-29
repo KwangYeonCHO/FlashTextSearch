@@ -128,6 +128,61 @@ fn update_window_theme_and_title(
     Ok(())
 }
 
+/// 命令：最小化主窗口
+#[tauri::command]
+fn window_minimize(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.minimize();
+    }
+    Ok(())
+}
+
+/// 命令：切换主窗口最大化 / 还原
+#[tauri::command]
+fn window_toggle_maximize(app: tauri::AppHandle) -> Result<bool, String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let is_max = window.is_maximized().unwrap_or(false);
+        if is_max {
+            let _ = window.unminimize();
+            let _ = window.unmaximize();
+            Ok(false)
+        } else {
+            let _ = window.maximize();
+            Ok(true)
+        }
+    } else {
+        Ok(false)
+    }
+}
+
+/// 命令：关闭主窗口（隐藏至系统托盘）
+#[tauri::command]
+fn window_close(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+    Ok(())
+}
+
+/// 命令：启动原生窗口拖拽
+#[tauri::command]
+fn window_start_dragging(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.start_dragging();
+    }
+    Ok(())
+}
+
+/// 命令：查询当前窗口是否最大化
+#[tauri::command]
+fn window_is_maximized(app: tauri::AppHandle) -> Result<bool, String> {
+    if let Some(window) = app.get_webview_window("main") {
+        Ok(window.is_maximized().unwrap_or(false))
+    } else {
+        Ok(false)
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 启动时静默清理历史升级备份文件 (.old)
@@ -163,7 +218,12 @@ pub fn run() {
             check_app_update,
             install_app_update,
             update_tray_menu_language,
-            update_window_theme_and_title
+            update_window_theme_and_title,
+            window_minimize,
+            window_toggle_maximize,
+            window_close,
+            window_is_maximized,
+            window_start_dragging
         ])
         // 2. 拦截窗口关闭事件：点击 X 最小化隐藏到系统托盘，不真正退出
         .on_window_event(|window, event| {

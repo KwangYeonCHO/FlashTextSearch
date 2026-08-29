@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.6.0"
+version = "0.6.1"
 description = "Fast Text Search Windows Application"
 authors = ["you"]
 edition = "2021"

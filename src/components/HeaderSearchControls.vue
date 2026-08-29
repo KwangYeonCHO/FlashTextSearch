@@ -2,37 +2,36 @@
   <div class="glass-panel px-5 py-3.5 border-b shadow-sm relative z-30">
     <!-- 最顶部品牌与全局配置行 (Logo、标题、多语言、主题切换、自定义无边框窗口控制按钮) -->
     <div
-      data-tauri-drag-region
       class="flex items-center justify-between pb-2.5 mb-3 border-b select-none"
       style="border-color: var(--border-subtle)"
     >
-      <!-- 品牌与 Logo (支持拖拽移动窗口) -->
-      <div data-tauri-drag-region class="flex items-center gap-2.5 cursor-move flex-1">
+      <!-- 品牌与 Logo (支持原生拖拽移动窗口与双击最大化) -->
+      <div
+        class="flex items-center gap-2.5 cursor-move"
+        @mousedown="handleTitlebarMouseDown"
+        @dblclick="handleTitlebarDblClick"
+      >
         <img
-          data-tauri-drag-region
           src="/logo.png"
           alt="Logo"
           class="w-6 h-6 rounded-lg shadow-sm border shrink-0 pointer-events-none"
           style="border-color: var(--border-subtle)"
         />
-        <div data-tauri-drag-region class="flex items-center gap-2">
+        <div class="flex items-center gap-2 pointer-events-none">
           <span
-            data-tauri-drag-region
-            class="text-sm font-black tracking-wide bg-gradient-to-r from-sky-500 via-indigo-400 to-amber-500 bg-clip-text text-transparent pointer-events-none"
+            class="text-sm font-black tracking-wide bg-gradient-to-r from-sky-500 via-indigo-400 to-amber-500 bg-clip-text text-transparent"
           >
             {{ t.appTitle }}
           </span>
           <!-- 精致版本号徽章 -->
           <span
-            data-tauri-drag-region
-            class="px-1.5 py-0.2 rounded-md font-mono text-[10px] font-bold border transition pointer-events-none"
+            class="px-1.5 py-0.2 rounded-md font-mono text-[10px] font-bold border transition"
             style="background-color: var(--match-badge-bg); color: var(--match-badge-text); border-color: var(--match-badge-border);"
           >
-            v0.6.0
+            v0.6.1
           </span>
           <span
-            data-tauri-drag-region
-            class="text-[11px] hidden md:inline-block font-medium pointer-events-none"
+            class="text-[11px] hidden md:inline-block font-medium"
             style="color: var(--text-muted)"
           >
             {{ t.appSubtitle }}
@@ -40,7 +39,14 @@
         </div>
       </div>
 
-      <!-- 右侧：多语言、多主题切换器与原生质感窗口控制按钮组 -->
+      <!-- 中间可拖拽空白区域 -->
+      <div
+        class="flex-1 h-7 cursor-move mx-2"
+        @mousedown="handleTitlebarMouseDown"
+        @dblclick="handleTitlebarDblClick"
+      ></div>
+
+      <!-- 右侧：多语言、多主题切换器与原生质感窗口控制按钮组 (禁止拖拽冒泡，保证点击即时触发) -->
       <div class="flex items-center gap-2 shrink-0">
         <!-- 语言选择器 (中/韩/英) -->
         <div class="relative flex items-center theme-input-box rounded-xl px-2.5 py-1 text-xs">
@@ -89,7 +95,7 @@
           <button
             class="w-7 h-7 flex items-center justify-center rounded-lg transition cursor-pointer hover:bg-white/10 active:bg-white/20 text-slate-400 hover:text-slate-200"
             title="最小化 / Minimize"
-            @click="minimizeWindow"
+            @click.stop="minimizeWindow"
           >
             <Minus class="w-3.5 h-3.5" />
           </button>
@@ -98,7 +104,7 @@
           <button
             class="w-7 h-7 flex items-center justify-center rounded-lg transition cursor-pointer hover:bg-white/10 active:bg-white/20 text-slate-400 hover:text-slate-200"
             :title="isMaximized ? '向下还原 / Restore' : '最大化 / Maximize'"
-            @click="toggleMaximizeWindow"
+            @click.stop="toggleMaximizeWindow"
           >
             <Copy v-if="isMaximized" class="w-3 h-3 rotate-180" />
             <Square v-else class="w-3 h-3" />
@@ -108,7 +114,7 @@
           <button
             class="w-7 h-7 flex items-center justify-center rounded-lg transition cursor-pointer hover:bg-rose-500 hover:text-white active:bg-rose-600 text-slate-400"
             title="关闭到托盘 / Close to Tray"
-            @click="closeWindow"
+            @click.stop="closeWindow"
           >
             <X class="w-3.5 h-3.5" />
           </button>
@@ -391,7 +397,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import {
   FolderOpen,
   Search,
@@ -421,34 +426,41 @@ defineProps<{
   isSearching: boolean;
 }>();
 
-// 自定义无边框窗口操作控制
-const appWindow = getCurrentWebviewWindow();
+// 自定义无边框窗口原生操作控制与拖拽
 const isMaximized = ref(false);
 
-const minimizeWindow = async () => {
-  try {
-    await appWindow.minimize();
-  } catch (e) {
-    console.warn("最小化窗口失败:", e);
+const handleTitlebarMouseDown = (e: MouseEvent) => {
+  if (e.button === 0) {
+    invoke("window_start_dragging").catch(() => {});
   }
+};
+
+const handleTitlebarDblClick = async () => {
+  try {
+    isMaximized.value = await invoke<boolean>("window_toggle_maximize");
+  } catch (e) {
+    console.warn("双击切换最大化失败:", e);
+  }
+};
+
+const minimizeWindow = () => {
+  invoke("window_minimize").catch((e) => {
+    console.warn("最小化窗口失败:", e);
+  });
 };
 
 const toggleMaximizeWindow = async () => {
   try {
-    await appWindow.toggleMaximize();
-    isMaximized.value = await appWindow.isMaximized();
+    isMaximized.value = await invoke<boolean>("window_toggle_maximize");
   } catch (e) {
     console.warn("最大化/还原窗口失败:", e);
   }
 };
 
-const closeWindow = async () => {
-  try {
-    // 触发窗口关闭事件，被 Rust on_window_event 拦截并优雅隐藏至系统托盘
-    await appWindow.close();
-  } catch (e) {
+const closeWindow = () => {
+  invoke("window_close").catch((e) => {
     console.warn("关闭窗口失败:", e);
-  }
+  });
 };
 
 // 容器 DOM 引用用于精准点击与焦点失焦判断
@@ -469,10 +481,7 @@ const handleGlobalMouseDown = (event: MouseEvent) => {
 onMounted(async () => {
   document.addEventListener("mousedown", handleGlobalMouseDown);
   try {
-    isMaximized.value = await appWindow.isMaximized();
-    await appWindow.onResized(async () => {
-      isMaximized.value = await appWindow.isMaximized();
-    });
+    isMaximized.value = await invoke<boolean>("window_is_maximized");
   } catch (e) {
     // ignore
   }
