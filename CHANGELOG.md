@@ -5,6 +5,15 @@ All notable changes to **FlashText Search** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.6.0] - 2026-08-29
+
+### UI & Window Architecture
+- **Frameless Window & Unified Modern Header**: Completely removed redundant OS native window title bar to eliminate the "double title" clutter.
+- **Custom Native-Feel Window Controls**: Directly embedded Windows Fluent-style Minimize (`—`), Maximize/Restore (`◻` / `❐`), and Close (`✕` hide to tray) buttons in the header bar.
+- **Full Drag & Double-Click Support**: Entire header area supports native window dragging (`data-tauri-drag-region`) and double-click to toggle maximize.
+
+---
+
 ## [v0.5.2] - 2026-08-29
 
 ### UI & Window Appearance
