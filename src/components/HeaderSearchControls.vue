@@ -14,7 +14,7 @@
             class="px-1.5 py-0.2 rounded-md font-mono text-[10px] font-bold border transition"
             style="background-color: var(--match-badge-bg); color: var(--match-badge-text); border-color: var(--match-badge-border);"
           >
-            v0.5.1
+            v0.5.2
           </span>
           <span class="text-[11px] hidden md:inline-block font-medium" style="color: var(--text-muted)">
             {{ t.appSubtitle }}

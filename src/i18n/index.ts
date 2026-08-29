@@ -323,6 +323,8 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
   },
 };
 
+import { syncWindowAppearance } from "../theme";
+
 // 语言状态管理与持久化存储
 const savedLang = (localStorage.getItem("flashtext_lang") as LanguageKey) || "zh";
 export const currentLang = ref<LanguageKey>(savedLang);
@@ -333,6 +335,7 @@ export const setLanguage = (lang: LanguageKey) => {
   invoke("update_tray_menu_language", { lang }).catch((err: any) => {
     console.warn("更新托盘语言失败:", err);
   });
+  syncWindowAppearance(undefined, lang);
 };
 
 export const t = computed(() => translations[currentLang.value] || translations.zh);

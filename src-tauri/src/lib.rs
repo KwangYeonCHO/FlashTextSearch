@@ -110,6 +110,24 @@ fn update_tray_menu_language(state: tauri::State<TrayMenuState>, lang: String) -
     Ok(())
 }
 
+/// 命令：根据当前主题与语言动态设置 Windows 原生标题栏暗色/浅色模式与标题文字
+#[tauri::command]
+fn update_window_theme_and_title(
+    app: tauri::AppHandle,
+    theme: String,
+    title: String,
+) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let tauri_theme = match theme.as_str() {
+            "light_crisp" => tauri::Theme::Light,
+            _ => tauri::Theme::Dark,
+        };
+        let _ = window.set_theme(Some(tauri_theme));
+        let _ = window.set_title(&title);
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 启动时静默清理历史升级备份文件 (.old)
@@ -144,7 +162,8 @@ pub fn run() {
             open_with_system_app,
             check_app_update,
             install_app_update,
-            update_tray_menu_language
+            update_tray_menu_language,
+            update_window_theme_and_title
         ])
         // 2. 拦截窗口关闭事件：点击 X 最小化隐藏到系统托盘，不真正退出
         .on_window_event(|window, event| {
