@@ -52,7 +52,7 @@
     <!-- 搜索输入主控制行：路径与搜索关键词 -->
     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
       <!-- 搜索目录输入与历史下拉 -->
-      <div class="md:col-span-5 relative">
+      <div ref="pathContainerRef" class="md:col-span-5 relative">
         <div class="flex items-center gap-2 theme-input-box rounded-xl px-3 py-2 shadow-sm">
           <FolderOpen class="w-4 h-4 text-sky-500 shrink-0" />
           <input
@@ -62,7 +62,9 @@
             class="bg-transparent border-none outline-none text-sm w-full"
             style="color: var(--text-title)"
             @focus="showPathHistory = true"
+            @click="showPathHistory = true"
             @keydown.enter="handleSearch"
+            @keydown.esc="showPathHistory = false"
           />
           <button
             v-if="pathHistory.length > 0"
@@ -86,7 +88,6 @@
         <!-- 目录历史下拉弹出框 -->
         <div
           v-if="showPathHistory && pathHistory.length > 0"
-          v-click-outside="() => (showPathHistory = false)"
           class="absolute left-0 right-0 top-full mt-1.5 rounded-xl border shadow-xl z-50 overflow-hidden text-xs divide-y"
           style="background-color: var(--bg-card); border-color: var(--border-subtle); backdrop-filter: blur(16px);"
         >
@@ -124,7 +125,7 @@
       </div>
 
       <!-- 搜索关键词输入与历史下拉 -->
-      <div class="md:col-span-5 relative">
+      <div ref="keywordContainerRef" class="md:col-span-5 relative">
         <div class="flex items-center gap-2 theme-input-box rounded-xl px-3 py-2 shadow-sm">
           <Search class="w-4 h-4 text-amber-500 shrink-0" />
           <input
@@ -134,7 +135,9 @@
             class="bg-transparent border-none outline-none text-sm w-full"
             style="color: var(--text-title)"
             @focus="showKeywordHistory = true"
+            @click="showKeywordHistory = true"
             @keydown.enter="handleSearch"
+            @keydown.esc="showKeywordHistory = false"
           />
           <button
             v-if="keywordHistory.length > 0"
@@ -159,7 +162,6 @@
         <!-- 关键词历史下拉弹出框 (支持单个删除与快速填入) -->
         <div
           v-if="showKeywordHistory && keywordHistory.length > 0"
-          v-click-outside="() => (showKeywordHistory = false)"
           class="absolute left-0 right-0 top-full mt-1.5 rounded-xl border shadow-xl z-50 overflow-hidden text-xs divide-y"
           style="background-color: var(--bg-card); border-color: var(--border-subtle); backdrop-filter: blur(16px);"
         >
@@ -320,7 +322,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import {
   FolderOpen,
@@ -347,20 +349,28 @@ defineProps<{
   isSearching: boolean;
 }>();
 
-// 自定义点击外部指令
-const vClickOutside = {
-  mounted(el: any, binding: any) {
-    el.clickOutsideEvent = (event: Event) => {
-      if (!(el === event.target || el.contains(event.target))) {
-        binding.value(event);
-      }
-    };
-    document.addEventListener("click", el.clickOutsideEvent);
-  },
-  unmounted(el: any) {
-    document.removeEventListener("click", el.clickOutsideEvent);
-  },
+// 容器 DOM 引用用于精准点击与焦点失焦判断
+const pathContainerRef = ref<HTMLElement | null>(null);
+const keywordContainerRef = ref<HTMLElement | null>(null);
+
+// 全局鼠标按下监听，仅当点击在输入组件外部时平滑隐藏历史记录
+const handleGlobalMouseDown = (event: MouseEvent) => {
+  const target = event.target as Node;
+  if (pathContainerRef.value && !pathContainerRef.value.contains(target)) {
+    showPathHistory.value = false;
+  }
+  if (keywordContainerRef.value && !keywordContainerRef.value.contains(target)) {
+    showKeywordHistory.value = false;
+  }
 };
+
+onMounted(() => {
+  document.addEventListener("mousedown", handleGlobalMouseDown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("mousedown", handleGlobalMouseDown);
+});
 
 // 搜索条件与持久化状态
 const rootPath = ref(localStorage.getItem("flashtext_last_path") || "");
