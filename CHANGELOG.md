@@ -1,9 +1,15 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to **FlashText Search** will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [v0.3.1] - 2026-08-29
+
+### Performance & Fixes
+- **Asynchronous Zero-Lag Update Checking**: Replaced heavy synchronous GitHub CLI process with ultra-fast lightweight background async HTTP query (`CREATE_NO_WINDOW` and strict timeouts), eliminating any UI stutter during startup.
+- **Updated Window Screenshot**: Updated official README screenshot with latest UI featuring updater controls and full layout.
 
 ---
 

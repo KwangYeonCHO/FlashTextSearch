@@ -160,10 +160,10 @@ const handleMatchChange = (match: MatchItem) => {
 
 // 初始化 Tauri 事件监听通道
 onMounted(async () => {
-  // 启动时静默检查更新
+  // 启动 3 秒后后台完全异步检查更新，零卡顿
   setTimeout(() => {
-    checkForUpdates(true);
-  }, 1500);
+    checkForUpdates(true).catch(() => {});
+  }, 3000);
 
   // 1. 批量接收搜索结果流
   unlistenBatch = await listen<FileMatchResult[]>("search-result-batch", (event) => {

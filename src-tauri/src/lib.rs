@@ -61,16 +61,24 @@ fn open_with_system_app(path: String) -> Result<(), String> {
     DocumentService::open_with_system_app(&path)
 }
 
-/// 命令：检查 GitHub Release 自动更新
+/// 命令：检查 GitHub Release 自动更新 (完全异步后台执行，零卡顿)
 #[tauri::command]
-fn check_app_update() -> Result<UpdateCheckResult, String> {
-    UpdaterService::check_update()
+async fn check_app_update() -> Result<UpdateCheckResult, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        UpdaterService::check_update()
+    })
+    .await
+    .map_err(|e| format!("更新检查异步调度失败: {}", e))?
 }
 
-/// 命令：下载并执行更新替换
+/// 命令：下载并执行更新替换 (完全异步后台执行)
 #[tauri::command]
-fn install_app_update(tag_name: String) -> Result<(), String> {
-    UpdaterService::download_and_install_update(&tag_name)
+async fn install_app_update(tag_name: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        UpdaterService::download_and_install_update(&tag_name)
+    })
+    .await
+    .map_err(|e| format!("更新安装异步调度失败: {}", e))?
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

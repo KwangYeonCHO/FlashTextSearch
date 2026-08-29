@@ -1,4 +1,4 @@
-﻿use std::env;
+use std::env;
 use std::fs;
 use std::process::Command;
 use serde::{Deserialize, Serialize};
@@ -37,30 +37,17 @@ pub struct UpdateCheckResult {
 pub struct UpdaterService;
 
 impl UpdaterService {
-    /// 检查 GitHub Release 最新版本
+    /// 检查 GitHub Release 最新版本（超快轻量无阻塞）
     pub fn check_update() -> Result<UpdateCheckResult, String> {
         let current_ver = env!("CARGO_PKG_VERSION");
 
-        // 优先使用 gh CLI 查询，若无 gh 则直接使用 curl/powershell 请求公开 GitHub API
-        let release: GhReleaseInfo = if let Ok(output) = Command::new("gh")
-            .args(&[
-                "release",
-                "view",
-                "--repo",
-                "KwangYeonCHO/FlashTextSearch",
-                "--json",
-                "tagName,name,body,publishedAt,assets",
-            ])
-            .output()
-        {
-            if output.status.success() {
-                serde_json::from_slice(&output.stdout)
-                    .map_err(|e| format!("解析 Release 信息失败: {}", e))?
-            } else {
-                Self::fetch_release_via_curl()?
+        // 优先使用快速轻量的 curl 请求 GitHub 公开 API (带超时控制与无窗口标志)
+        let release: GhReleaseInfo = match Self::fetch_release_via_curl() {
+            Ok(info) => info,
+            Err(_) => {
+                // 后备尝试 gh CLI
+                Self::fetch_release_via_gh()?
             }
-        } else {
-            Self::fetch_release_via_curl()?
         };
 
         let clean_tag = release.tag_name.trim_start_matches('v').trim();
@@ -78,15 +65,33 @@ impl UpdaterService {
         })
     }
 
-    /// 后备公开 API 请求方式
+    /// 使用极速轻量的 curl 命令请求 GitHub Release API (带 2s 连接超时与 3s 最大总耗时)
     fn fetch_release_via_curl() -> Result<GhReleaseInfo, String> {
         let url = "https://api.github.com/repos/KwangYeonCHO/FlashTextSearch/releases/latest";
-        let output = Command::new("curl")
-            .args(&["-s", "-H", "User-Agent: FlashTextSearch-App", url])
-            .output()
-            .map_err(|e| format!("请求 GitHub API 失败: {}", e))?;
+        let mut cmd = Command::new("curl");
+        cmd.args(&[
+            "-s",
+            "--connect-timeout",
+            "2",
+            "--max-time",
+            "3",
+            "-H",
+            "User-Agent: FlashTextSearch-App",
+            "-H",
+            "Accept: application/vnd.github.v3+json",
+            url,
+        ]);
 
-        if !output.status.success() {
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            cmd.creation_flags(CREATE_NO_WINDOW);
+        }
+
+        let output = cmd.output().map_err(|e| format!("请求 GitHub API 失败: {}", e))?;
+
+        if !output.status.success() || output.stdout.is_empty() {
             return Err("无法连接到 GitHub Release 服务".to_string());
         }
 
@@ -108,6 +113,34 @@ impl UpdaterService {
             published_at: api_rel.published_at.unwrap_or_default(),
             assets: vec![],
         })
+    }
+
+    /// 后备使用 gh CLI
+    fn fetch_release_via_gh() -> Result<GhReleaseInfo, String> {
+        let mut cmd = Command::new("gh");
+        cmd.args(&[
+            "release",
+            "view",
+            "--repo",
+            "KwangYeonCHO/FlashTextSearch",
+            "--json",
+            "tagName,name,body,publishedAt,assets",
+        ]);
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            cmd.creation_flags(CREATE_NO_WINDOW);
+        }
+
+        let output = cmd.output().map_err(|e| format!("执行 gh 失败: {}", e))?;
+        if !output.status.success() {
+            return Err("GitHub CLI 未就绪".to_string());
+        }
+
+        serde_json::from_slice(&output.stdout)
+            .map_err(|e| format!("解析 Release 信息失败: {}", e))
     }
 
     /// 下载最新 Release 附件并自动替换更新并重启
