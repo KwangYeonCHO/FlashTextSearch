@@ -6,6 +6,7 @@ use memmap2::Mmap;
 
 use crate::encoding::EncodingHelper;
 use crate::excel_search::ExcelSearcher;
+use crate::office_doc_search::OfficeDocSearch;
 use crate::types::{ExcelSheetContent, ExcelWorkbookContent, TextDocumentContent};
 
 /// 文档读取与系统原生操作服务
@@ -20,33 +21,42 @@ impl DocumentService {
         Some(folder.to_string_lossy().to_string())
     }
 
-    /// 读取纯文本/代码文件内容以供右侧 Monaco 编辑器预览
+    /// 读取纯文本/代码文件及 Word/HWP 文档内容以供右侧 Monaco 编辑器预览
     pub fn read_text_file(path_str: &str, max_lines_limit: Option<usize>) -> Result<TextDocumentContent, String> {
         let path = Path::new(path_str);
         if !path.exists() {
             return Err("文件不存在".to_string());
         }
 
-        let metadata = std::fs::metadata(path).map_err(|e| format!("无法读取文件元数据: {}", e))?;
-        let file_size = metadata.len();
+        let ext = path
+            .extension()
+            .map(|e| e.to_string_lossy().to_lowercase())
+            .unwrap_or_default();
 
-        let file = File::open(path).map_err(|e| format!("打开文件失败: {}", e))?;
-
-        // 根据文件大小决定读取策略
-        let (full_text, encoding) = if file_size > 64 * 1024 {
-            let mmap = unsafe { Mmap::map(&file).map_err(|e| format!("内存映射失败: {}", e))? };
-            if EncodingHelper::is_binary(&mmap) {
-                return Err("该文件为二进制文件，无法作为纯文本预览".to_string());
-            }
-            let (text, enc) = EncodingHelper::decode_bytes(&mmap);
-            (text, enc)
+        // 1. 如果是 Word (.docx/.doc) 或 韩软公文 (.hwpx/.hwp)，调用专用提取器
+        let (full_text, encoding): (String, String) = if OfficeDocSearch::is_supported_extension(&ext) {
+            let text = OfficeDocSearch::extract_document_text(path)?;
+            (text, "UTF-8 (Extracted)".to_string())
         } else {
-            let bytes = std::fs::read(path).map_err(|e| format!("读取文件失败: {}", e))?;
-            if EncodingHelper::is_binary(&bytes) {
-                return Err("该文件为二进制文件，无法作为纯文本预览".to_string());
+            let metadata = std::fs::metadata(path).map_err(|e| format!("无法读取文件元数据: {}", e))?;
+            let file_size = metadata.len();
+            let file = File::open(path).map_err(|e| format!("打开文件失败: {}", e))?;
+
+            if file_size > 64 * 1024 {
+                let mmap = unsafe { Mmap::map(&file).map_err(|e| format!("内存映射失败: {}", e))? };
+                if EncodingHelper::is_binary(&mmap) {
+                    return Err("该文件为二进制文件，无法作为纯文本预览".to_string());
+                }
+                let (text, enc) = EncodingHelper::decode_bytes(&mmap);
+                (text, enc.to_string())
+            } else {
+                let bytes = std::fs::read(path).map_err(|e| format!("读取文件失败: {}", e))?;
+                if EncodingHelper::is_binary(&bytes) {
+                    return Err("该文件为二进制文件，无法作为纯文本预览".to_string());
+                }
+                let (text, enc) = EncodingHelper::decode_bytes(&bytes);
+                (text, enc.to_string())
             }
-            let (text, enc) = EncodingHelper::decode_bytes(&bytes);
-            (text, enc)
         };
 
         let mut lines = Vec::new();

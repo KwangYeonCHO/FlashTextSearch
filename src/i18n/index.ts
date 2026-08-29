@@ -14,6 +14,7 @@ export interface TranslationDictionary {
   presetAll: string;
   presetText: string;
   presetExcel: string;
+  presetWordHwp: string;
   presetCode: string;
   presetCustom: string;
   customPlaceholder: string;
@@ -91,9 +92,10 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
     startSearch: "极速搜索",
     stopSearch: "停止搜索",
     formatFilter: "格式过滤:",
-    presetAll: "全部文本/代码",
+    presetAll: "全部文本/文档/代码",
     presetText: "纯文本 (*.txt, *.log, *.md)",
     presetExcel: "Excel 表格 (*.xlsx, *.xls)",
+    presetWordHwp: "Word/韩软 (*.docx, *.doc, *.hwpx, *.hwp)",
     presetCode: "源代码文件",
     presetCustom: "自定义后缀...",
     customPlaceholder: "如 txt, xlsx, log",
@@ -169,9 +171,10 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
     startSearch: "초고속 검색",
     stopSearch: "검색 중지",
     formatFilter: "형식 필터:",
-    presetAll: "모든 텍스트/코드",
+    presetAll: "모든 텍스트/문서/코드",
     presetText: "일반 텍스트 (*.txt, *.log, *.md)",
     presetExcel: "Excel 시트 (*.xlsx, *.xls)",
+    presetWordHwp: "워드/한글 (*.docx, *.doc, *.hwpx, *.hwp)",
     presetCode: "소스 코드 파일",
     presetCustom: "사용자 지정 확장자...",
     customPlaceholder: "예: txt, xlsx, log",
@@ -247,9 +250,10 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
     startSearch: "Fast Search",
     stopSearch: "Stop Search",
     formatFilter: "Format Filter:",
-    presetAll: "All Text / Code",
+    presetAll: "All Text / Docs / Code",
     presetText: "Plain Text (*.txt, *.log, *.md)",
     presetExcel: "Excel Spreadsheets (*.xlsx, *.xls)",
+    presetWordHwp: "Word & HWP (*.docx, *.doc, *.hwpx, *.hwp)",
     presetCode: "Source Code Files",
     presetCustom: "Custom Extensions...",
     customPlaceholder: "e.g. txt, xlsx, log",

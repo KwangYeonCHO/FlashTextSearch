@@ -8,6 +8,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::excel_search::ExcelSearcher;
 use crate::fast_text_search::{CompiledMatcher, FastTextSearcher};
+use crate::office_doc_search::OfficeDocSearch;
 use crate::types::{FileMatchResult, SearchProgress, SearchQuery};
 
 /// 搜索引擎全局状态管理（用于控制取消与并发）
@@ -171,9 +172,11 @@ impl SearchEngine {
                             .map(|e| e.to_string_lossy().to_lowercase())
                             .unwrap_or_default();
 
-                        // 路由分流：Excel 文档 vs 纯文本/代码快速路径
+                        // 路由分流：Excel 表格 vs Word/HWP 办公文档 vs 纯文本/代码快速路径
                         if ext == "xlsx" || ext == "xls" || ext == "ods" || ext == "xlsb" {
                             ExcelSearcher::search_file(path, file_size, modified_time, &matcher)
+                        } else if OfficeDocSearch::is_supported_extension(&ext) {
+                            OfficeDocSearch::search_file(path, file_size, modified_time, &matcher)
                         } else {
                             FastTextSearcher::search_file(path, file_size, modified_time, &matcher)
                         }
@@ -301,6 +304,11 @@ impl SearchEngine {
                 | "xlsx"
                 | "xls"
                 | "ods"
+                | "xlsb"
+                | "docx"
+                | "doc"
+                | "hwpx"
+                | "hwp"
         )
     }
 }

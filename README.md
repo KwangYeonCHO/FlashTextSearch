@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="docs/images/logo.png" width="108" height="108" alt="FlashText Search Logo" />
 
@@ -38,9 +38,10 @@
 ### ✨ 核心特性
 
 1. **⚡ 极致多线程检索性能**
-   - 纯文本与源码：基于 `memmap2` 零拷贝与 `aho-corasick` SIMD 指令集检索，吞吐速度高达每秒数万文件。
-   - Excel 电子表格：原生集成 `calamine` 高速引擎，穿透扫描 `.xlsx`, `.xls`, `.ods`, `.xlsb` 全工作表。
-   - 智能编码识别：自动探测 UTF-8, GBK, GB18030, EUC-KR, UTF-16LE/BE 等多国编码，彻底避免乱码。
+   - **纯文本与代码**：基于 `memmap2` 零拷贝与 `aho-corasick` SIMD 指令集检索，吞吐速度高达每秒数万文件。
+   - **Word 与 韩软公文**：深度解析 **Word (`*.docx`, `*.doc`)** 与 **韩文 HWP (`*.hwpx`, `*.hwp`)**，智能提取段落与正文文本。
+   - **Excel 电子表格**：原生集成 `calamine` 高速引擎，穿透扫描 `.xlsx`, `.xls`, `.ods`, `.xlsb` 全工作表。
+   - **智能编码识别**：自动探测 UTF-8, GBK, GB18030, EUC-KR, CP949, UTF-16LE/BE 等多国编码，彻底避免乱码。
 
 2. **📊 Excel 表格与代码行精准定位**
    - 搜索命中即时提取工作表名称与单元格坐标（如 `통합파트리스트!A576`）。
@@ -92,9 +93,10 @@
 ### ✨ 주요 기능
 
 1. **⚡ 극한의 멀티스레드 검색 성능**
-   - 텍스트 및 소스 코드: `memmap2` 제로카피 및 `aho-corasick` SIMD 가속으로 초당 수만 파일 고속 스캔.
-   - Excel 문서: `calamine` 고속 엔진 내장으로 `.xlsx`, `.xls`, `.ods`, `.xlsb` 모든 워크시트 및 셀 내용 완벽 탐색.
-   - 다국어 인코딩 자동 감지: UTF-8, EUC-KR, CP949, GBK, UTF-16 등을 자동 인식하여 글자 깨짐 방지.
+   - **텍스트 및 소스 코드**: `memmap2` 제로카피 및 `aho-corasick` SIMD 가속으로 초당 수만 파일 고속 스캔.
+   - **워드 및 한글 문서 지원**: **Word (`*.docx`, `*.doc`)** 및 **한글/HWP (`*.hwpx`, `*.hwp`)** 내부 문단 및 텍스트 완벽 추출 및 고속 검색.
+   - **Excel 스프레드시트**: `calamine` 고속 엔진 내장으로 `.xlsx`, `.xls`, `.ods`, `.xlsb` 모든 워크시트 및 셀 내용 완벽 탐색.
+   - **다국어 인코딩 자동 감지**: UTF-8, EUC-KR, CP949, GBK, UTF-16 등을 자동 인식하여 글자 깨짐 방지.
 
 2. **📊 Excel 셀 및 소스 코드 행 정밀 위치 이동**
    - 검색 일치 항목의 시트명과 셀 좌표(예: `TO!B853`, `통합파트리스트!A576`) 자동 추출.
@@ -125,7 +127,7 @@
 
 ### 📖 Overview
 **FlashText Search** is an ultra-fast desktop application designed for Windows power users to search text and spreadsheet contents at lightning speed.
-Built with **Rust** on the backend using **Zero-Copy Memory Mapping (`memmap2`)**, **Aho-Corasick SIMD Vector Acceleration**, and **Rayon multi-threaded scheduling**, it traverses hundreds of thousands of documents and Excel spreadsheets within seconds.
+Built with **Rust** on the backend using **Zero-Copy Memory Mapping (`memmap2`)**, **Aho-Corasick SIMD Vector Acceleration**, and **Rayon multi-threaded scheduling**, it traverses hundreds of thousands of documents, Word files, Hangul HWP/HWPX documents, and Excel spreadsheets within seconds.
 
 The frontend is powered by **Vue 3, TypeScript, and Tailwind CSS**, featuring an integrated **Monaco Editor** and high-performance **Excel Worksheet Matrix Viewer** with smooth scrolling to matched coordinates, custom themes, persistent search history, and seamless GitHub in-app updates.
 
@@ -134,9 +136,10 @@ The frontend is powered by **Vue 3, TypeScript, and Tailwind CSS**, featuring an
 ### ✨ Key Features
 
 1. **⚡ Extreme Multi-Threaded Search Engine**
-   - Plain text & code files: Zero-copy memory mapping (`memmap2`) + SIMD acceleration (`aho-corasick`).
-   - Excel Spreadsheets: Native `.xlsx`, `.xls`, `.ods`, and `.xlsb` parsing via `calamine`.
-   - Multi-Encoding Detection: Intelligent auto-detection for UTF-8, UTF-16, EUC-KR, GBK, and ASCII.
+   - **Plain text & Code**: Zero-copy memory mapping (`memmap2`) + SIMD acceleration (`aho-corasick`).
+   - **Word & Hancom HWP/HWPX**: Native full-text extraction and paragraph indexing for **Microsoft Word (`*.docx`, `*.doc`)** and **Hancom Hangul (`*.hwpx`, `*.hwp`)**.
+   - **Excel Spreadsheets**: Native `.xlsx`, `.xls`, `.ods`, and `.xlsb` parsing via `calamine`.
+   - **Multi-Encoding Detection**: Intelligent auto-detection for UTF-8, UTF-16, EUC-KR, CP949, GBK, and ASCII.
 
 2. **📊 Deep Coordinate Jumping & Cell Highlighting**
    - Automatically extracts sheet names and cell coordinates (e.g. `Sheet1!A576`).

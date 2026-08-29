@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.3.2"
+version = "0.4.0"
 description = "Fast Text Search Windows Application"
 authors = ["you"]
 edition = "2021"
@@ -29,5 +29,10 @@ chardetng = "0.1"
 calamine = "0.26"
 rfd = "0.15"
 walkdir = "2.5"
+zip = { version = "2.2", default-features = false, features = ["deflate"] }
+flate2 = "1.0"
+cfb = "0.7"
+quick-xml = "0.37"
+
 
 

@@ -14,7 +14,7 @@
             class="px-1.5 py-0.2 rounded-md font-mono text-[10px] font-bold border transition"
             style="background-color: var(--match-badge-bg); color: var(--match-badge-text); border-color: var(--match-badge-border);"
           >
-            v0.3.2
+            v0.4.0
           </span>
           <span class="text-[11px] hidden md:inline-block font-medium" style="color: var(--text-muted)">
             {{ t.appSubtitle }}
@@ -478,6 +478,7 @@ const customExtensions = ref("txt, xlsx, log");
 const getExtensionPresets = () => [
   { id: "all_text", label: t.value.presetAll, exts: [] },
   { id: "pure_text", label: t.value.presetText, exts: ["txt", "log", "md", "ini", "conf"] },
+  { id: "word_hwp", label: t.value.presetWordHwp, exts: ["docx", "doc", "hwpx", "hwp"] },
   { id: "excel", label: t.value.presetExcel, exts: ["xlsx", "xls", "ods", "csv"] },
   { id: "code", label: t.value.presetCode, exts: ["rs", "py", "js", "ts", "vue", "c", "cpp", "h", "cs", "java", "go", "php", "sql", "html", "css"] },
   { id: "custom", label: t.value.presetCustom, exts: [] },

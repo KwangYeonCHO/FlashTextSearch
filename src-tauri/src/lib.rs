@@ -2,6 +2,7 @@ pub mod document_service;
 pub mod encoding;
 pub mod excel_search;
 pub mod fast_text_search;
+pub mod office_doc_search;
 pub mod search_engine;
 pub mod types;
 pub mod updater_service;
