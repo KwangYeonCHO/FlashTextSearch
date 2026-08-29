@@ -46,6 +46,17 @@
             </option>
           </select>
         </div>
+
+        <!-- 检查更新按钮 -->
+        <button
+          class="flex items-center gap-1.5 theme-input-box rounded-xl px-2.5 py-1 text-xs transition cursor-pointer hover:opacity-80 border"
+          style="color: var(--text-title); border-color: var(--border-subtle)"
+          :title="t.checkUpdates"
+          @click="emit('checkUpdate')"
+        >
+          <Sparkles class="w-3.5 h-3.5 text-indigo-400" />
+          <span class="hidden md:inline-block font-medium">{{ t.checkUpdates }}</span>
+        </button>
       </div>
     </div>
 
@@ -335,6 +346,7 @@ import {
   Languages,
   Palette,
   History,
+  Sparkles,
 } from "@lucide/vue";
 import { t, currentLang, setLanguage, type LanguageKey } from "../i18n";
 import { currentTheme, applyTheme, themeOptions, type ThemeKey } from "../theme";
@@ -343,6 +355,7 @@ import type { SearchQuery } from "../types/search";
 const emit = defineEmits<{
   (e: "search", query: SearchQuery): void;
   (e: "cancel"): void;
+  (e: "checkUpdate"): void;
 }>();
 
 defineProps<{

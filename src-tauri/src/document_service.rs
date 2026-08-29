@@ -51,7 +51,7 @@ impl DocumentService {
 
         let mut lines = Vec::new();
         let mut total_lines = 0;
-        let limit = max_lines_limit.unwrap_or(20000); // 默认最多加载 20000 行，保证流畅
+        let limit = max_lines_limit.unwrap_or(50000); // 最多加载 50,000 行，保证超大文件也能完整定位
         let mut is_truncated = false;
 
         for line in full_text.lines() {
@@ -91,14 +91,18 @@ impl DocumentService {
                 let total_rows = range.height();
                 let max_cols = range.width();
 
-                // 提取前 500 行作为预览，避免超大表格卡顿
-                let preview_row_limit = total_rows.min(500);
+                // 提取前 50,000 行作为预览，支持大表格与深层行完整定位
+                let preview_row_limit = total_rows.min(50000);
                 let mut rows = Vec::with_capacity(preview_row_limit);
 
                 for row in range.rows().take(preview_row_limit) {
-                    let mut row_cells = Vec::with_capacity(row.len());
+                    let mut row_cells = Vec::with_capacity(max_cols);
                     for cell in row {
                         row_cells.push(ExcelSearcher::format_cell_data(cell));
+                    }
+                    // 补齐末尾空白单元格
+                    while row_cells.len() < max_cols {
+                        row_cells.push(String::new());
                     }
                     rows.push(row_cells);
                 }

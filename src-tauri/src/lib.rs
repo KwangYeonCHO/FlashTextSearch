@@ -4,6 +4,7 @@ pub mod excel_search;
 pub mod fast_text_search;
 pub mod search_engine;
 pub mod types;
+pub mod updater_service;
 
 use std::sync::Arc;
 use tauri::{AppHandle, State};
@@ -11,6 +12,7 @@ use tauri::{AppHandle, State};
 use crate::document_service::DocumentService;
 use crate::search_engine::{SearchEngine, SearchManager};
 use crate::types::{ExcelWorkbookContent, SearchQuery, TextDocumentContent};
+use crate::updater_service::{UpdateCheckResult, UpdaterService};
 
 /// 命令：弹出原生系统文件夹选择框
 #[tauri::command]
@@ -59,6 +61,18 @@ fn open_with_system_app(path: String) -> Result<(), String> {
     DocumentService::open_with_system_app(&path)
 }
 
+/// 命令：检查 GitHub Release 自动更新
+#[tauri::command]
+fn check_app_update() -> Result<UpdateCheckResult, String> {
+    UpdaterService::check_update()
+}
+
+/// 命令：下载并执行更新替换
+#[tauri::command]
+fn install_app_update(tag_name: String) -> Result<(), String> {
+    UpdaterService::download_and_install_update(&tag_name)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let search_manager = Arc::new(SearchManager::new());
@@ -74,9 +88,12 @@ pub fn run() {
             read_text_file,
             read_excel_file,
             open_in_file_manager,
-            open_with_system_app
+            open_with_system_app,
+            check_app_update,
+            install_app_update
         ])
         .run(tauri::generate_context!())
         .expect("运行 FlashTextSearch 应用程序时发生错误");
 }
+
 

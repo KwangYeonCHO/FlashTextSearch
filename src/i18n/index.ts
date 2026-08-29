@@ -71,6 +71,14 @@ export interface TranslationDictionary {
   clearAll: string;
   noHistory: string;
   deleteItem: string;
+  checkUpdates: string;
+  newVersionAvailable: string;
+  currentVersion: string;
+  latestVersion: string;
+  updateNow: string;
+  remindLater: string;
+  updating: string;
+  isLatestVersion: string;
 }
 
 export const translations: Record<LanguageKey, TranslationDictionary> = {
@@ -143,6 +151,14 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
     clearAll: "清空全部",
     noHistory: "暂无历史记录",
     deleteItem: "删除此条记录",
+    checkUpdates: "检查更新",
+    newVersionAvailable: "发现新版本可用",
+    currentVersion: "当前版本:",
+    latestVersion: "最新版本:",
+    updateNow: "立即自动升级并重启",
+    remindLater: "稍后提醒",
+    updating: "正在从 GitHub 下载最新版本并应用更新，请稍候...",
+    isLatestVersion: "当前已是最新版本",
   },
   ko: {
     appTitle: "FlashText Search",
@@ -213,6 +229,14 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
     clearAll: "모두 지우기",
     noHistory: "검색 기록이 없습니다",
     deleteItem: "이 기록 삭제",
+    checkUpdates: "업데이트 확인",
+    newVersionAvailable: "새 버전 사용 가능",
+    currentVersion: "현재 버전:",
+    latestVersion: "최신 버전:",
+    updateNow: "지금 자동 업데이트 및 재시작",
+    remindLater: "나중에 알림",
+    updating: "GitHub에서 최신 버전을 다운로드하여 적용하는 중입니다...",
+    isLatestVersion: "현재 최신 버전입니다",
   },
   en: {
     appTitle: "FlashText Search",
@@ -283,6 +307,14 @@ export const translations: Record<LanguageKey, TranslationDictionary> = {
     clearAll: "Clear All",
     noHistory: "No history records",
     deleteItem: "Delete this record",
+    checkUpdates: "Check Updates",
+    newVersionAvailable: "New Version Available",
+    currentVersion: "Current:",
+    latestVersion: "Latest:",
+    updateNow: "Update & Restart Now",
+    remindLater: "Remind Me Later",
+    updating: "Downloading latest release from GitHub and applying update...",
+    isLatestVersion: "You are up to date",
   },
 };
 

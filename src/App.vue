@@ -5,6 +5,7 @@
       :is-searching="isSearching"
       @search="handleStartSearch"
       @cancel="handleCancelSearch"
+      @check-update="handleManualCheckUpdate"
     />
 
     <!-- 中部双栏工作区 -->
@@ -35,6 +36,13 @@
       :is-searching="isSearching"
       :progress="progress"
     />
+
+    <!-- 自动更新弹窗组件 -->
+    <UpdateModal
+      :update-info="updateInfo"
+      :is-open="isUpdateModalOpen"
+      @close="isUpdateModalOpen = false"
+    />
   </div>
 </template>
 
@@ -46,17 +54,24 @@ import HeaderSearchControls from "./components/HeaderSearchControls.vue";
 import SearchResultsList from "./components/SearchResultsList.vue";
 import DocumentPreviewPane from "./components/DocumentPreviewPane.vue";
 import StatusBar from "./components/StatusBar.vue";
+import UpdateModal from "./components/UpdateModal.vue";
+import { t } from "./i18n";
 import type {
   FileMatchResult,
   MatchItem,
   SearchProgress,
   SearchQuery,
+  UpdateCheckResult,
 } from "./types/search";
 
 const isSearching = ref(false);
 const searchResults = ref<FileMatchResult[]>([]);
 const selectedFile = ref<FileMatchResult | null>(null);
 const selectedMatch = ref<MatchItem | null>(null);
+
+// 自动更新状态
+const updateInfo = ref<UpdateCheckResult | null>(null);
+const isUpdateModalOpen = ref(false);
 
 const progress = ref<SearchProgress>({
   totalFiles: 0,
@@ -72,6 +87,28 @@ const progress = ref<SearchProgress>({
 let unlistenBatch: UnlistenFn | null = null;
 let unlistenProgress: UnlistenFn | null = null;
 let unlistenFinished: UnlistenFn | null = null;
+
+// 检查更新逻辑
+const checkForUpdates = async (silent = false) => {
+  try {
+    const res = await invoke<UpdateCheckResult>("check_app_update");
+    updateInfo.value = res;
+    if (res.hasUpdate) {
+      isUpdateModalOpen.value = true;
+    } else if (!silent) {
+      alert(`${t.value.isLatestVersion} (${res.currentVersion})`);
+    }
+  } catch (err) {
+    if (!silent) {
+      console.error("检查更新失败:", err);
+      alert(`检查更新失败: ${err}`);
+    }
+  }
+};
+
+const handleManualCheckUpdate = () => {
+  checkForUpdates(false);
+};
 
 // 发起全文搜索
 const handleStartSearch = async (query: SearchQuery) => {
@@ -123,6 +160,11 @@ const handleMatchChange = (match: MatchItem) => {
 
 // 初始化 Tauri 事件监听通道
 onMounted(async () => {
+  // 启动时静默检查更新
+  setTimeout(() => {
+    checkForUpdates(true);
+  }, 1500);
+
   // 1. 批量接收搜索结果流
   unlistenBatch = await listen<FileMatchResult[]>("search-result-batch", (event) => {
     const newItems = event.payload;

@@ -68,8 +68,9 @@
             <!-- 各单元格 -->
             <td
               v-for="colIdx in currentSheet.maxCols"
+              :id="`excel-cell-${rowIdx + 1}-${colIdx}`"
               :key="colIdx"
-              class="py-1.5 px-2 border truncate transition-all max-w-[200px]"
+              class="py-1.5 px-2 border truncate transition-all max-w-[240px]"
               :style="{
                 backgroundColor: 'var(--bg-table-td)',
                 borderColor: 'var(--border-table)',
@@ -135,24 +136,43 @@ const getColumnLetter = (colIdx: number): string => {
 // 判断是否为当前高亮目标单元格
 const isTargetCell = (rowNum: number, colNum: number): boolean => {
   if (!props.targetRow) return false;
+  // 如果指定了目标 Sheet，必须匹配当前活动 Sheet
+  if (props.targetSheet && activeSheetName.value !== props.targetSheet) return false;
   const isRowMatch = props.targetRow === rowNum;
   if (!props.targetCol) return isRowMatch;
   return isRowMatch && props.targetCol === colNum;
 };
 
-// 滚动定位到目标行
-const scrollToTargetRow = async (rowNum: number) => {
+// 精确滚动定位到目标行与目标单元格
+const scrollToTarget = async (rowNum: number, colNum?: number) => {
   await nextTick();
-  const rowEl = document.getElementById(`excel-row-${rowNum}`);
-  if (rowEl && tableContainer.value) {
-    rowEl.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
+
+  const performScroll = (retry = 0) => {
+    // 优先尝试单元格级精准定位（行与列同时居中）
+    if (colNum) {
+      const cellEl = document.getElementById(`excel-cell-${rowNum}-${colNum}`);
+      if (cellEl) {
+        cellEl.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+        return;
+      }
+    }
+
+    // 备选按行居中定位
+    const rowEl = document.getElementById(`excel-row-${rowNum}`);
+    if (rowEl) {
+      rowEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else if (retry < 8) {
+      setTimeout(() => performScroll(retry + 1), 50);
+    }
+  };
+
+  requestAnimationFrame(() => performScroll(0));
 };
 
-// 监听目标 Sheet 与行号变化
+// 监听目标 Sheet 与行号/列号变化
 watch(
-  () => [props.workbook, props.targetSheet, props.targetRow],
-  ([_newWb, newSheet, newRow]) => {
+  () => [props.workbook, props.targetSheet, props.targetRow, props.targetCol],
+  ([_newWb, newSheet, newRow, newCol]) => {
     if (newSheet && typeof newSheet === "string") {
       activeSheetName.value = newSheet;
     } else if (props.workbook.sheets.length && !activeSheetName.value) {
@@ -160,9 +180,19 @@ watch(
     }
 
     if (newRow && typeof newRow === "number") {
-      scrollToTargetRow(newRow);
+      scrollToTarget(newRow, typeof newCol === "number" ? newCol : undefined);
     }
   },
   { immediate: true }
+);
+
+// 监听手动点击切换 Sheet Tab
+watch(
+  () => activeSheetName.value,
+  () => {
+    if (props.targetRow && (!props.targetSheet || props.targetSheet === activeSheetName.value)) {
+      scrollToTarget(props.targetRow, props.targetCol);
+    }
+  }
 );
 </script>

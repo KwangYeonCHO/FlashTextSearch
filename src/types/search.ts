@@ -113,3 +113,16 @@ export interface ExcelWorkbookContent {
   sheetNames: string[];
   sheets: ExcelSheetContent[];
 }
+
+/**
+ * 软件自动更新检查结果
+ */
+export interface UpdateCheckResult {
+  hasUpdate: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  releaseTitle: string;
+  releaseNotes: string;
+  publishedAt: string;
+}
+
