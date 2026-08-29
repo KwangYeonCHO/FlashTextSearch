@@ -5,6 +5,17 @@ All notable changes to **FlashText Search** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.5.0] - 2026-08-29
+
+### Added & Window Lifecycle
+- **Single-Instance Protection**: Prevents duplicate application processes. Launching a second instance automatically unminimizes, focuses, and brings the existing window to the front.
+- **Close to System Tray**: Clicking the window's top-right `X` button hides the application to the Windows system tray instead of terminating.
+- **System Tray Interaction**: Left-clicking the tray icon toggles window visibility. Right-clicking provides a dedicated context menu.
+- **Restore & Center Off-Screen Window**: Added a "恢复窗口显示 (居中复位) / Reset Window" tray menu item that restores and re-centers windows that were dragged out of visible screen bounds or resolution changes.
+- **True Exit Option**: Exiting via the system tray right-click menu performs a clean, genuine shutdown.
+
+---
+
 ## [v0.4.4] - 2026-08-29
 
 ### UI & Branding

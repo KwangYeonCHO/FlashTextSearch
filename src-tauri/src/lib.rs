@@ -82,6 +82,12 @@ async fn install_app_update(tag_name: String) -> Result<(), String> {
     .map_err(|e| format!("更新安装异步调度失败: {}", e))?
 }
 
+use tauri::{
+    menu::{Menu, MenuItem, PredefinedMenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    Manager, WindowEvent, LogicalSize, Size,
+};
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 启动时静默清理历史升级备份文件 (.old)
@@ -95,6 +101,14 @@ pub fn run() {
     let search_manager = Arc::new(SearchManager::new());
 
     tauri::Builder::default()
+        // 1. 防止重复运行单实例插件：二次启动时自动唤醒并置顶已有窗口
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(search_manager)
@@ -109,6 +123,72 @@ pub fn run() {
             check_app_update,
             install_app_update
         ])
+        // 2. 拦截窗口关闭事件：点击 X 最小化隐藏到系统托盘，不真正退出
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+        })
+        // 3. 构建系统托盘与右键菜单（右键退出才算真正退出）
+        .setup(|app| {
+            let show_item = MenuItem::with_id(app, "show", "显示主窗口 / Open Window", true, None::<&str>)?;
+            let reset_item = MenuItem::with_id(app, "reset_position", "恢复窗口显示 (居中复位) / Reset Window", true, None::<&str>)?;
+            let separator = PredefinedMenuItem::separator(app)?;
+            let quit_item = MenuItem::with_id(app, "quit", "退出程序 / Exit", true, None::<&str>)?;
+            let tray_menu = Menu::with_items(app, &[&show_item, &reset_item, &separator, &quit_item])?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .tooltip("FlashText Search - 极速文本搜索")
+                .menu(&tray_menu)
+                .show_menu_on_left_click(false)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.unminimize();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "reset_position" => {
+                        // 恢复窗口显示并将超出屏幕画面的程序复位到当前屏幕可视范围内
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.unminimize();
+                            let _ = window.set_size(Size::Logical(LogicalSize { width: 1280.0, height: 820.0 }));
+                            let _ = window.center();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                                let _ = window.unminimize();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    }
+                })
+                .build(app)?;
+
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("运行 FlashTextSearch 应用程序时发生错误");
 }
