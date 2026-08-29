@@ -84,6 +84,14 @@ async fn install_app_update(tag_name: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 启动时静默清理历史升级备份文件 (.old)
+    if let Ok(exe_path) = std::env::current_exe() {
+        let old_exe = exe_path.with_extension("exe.old");
+        if old_exe.exists() {
+            let _ = std::fs::remove_file(old_exe);
+        }
+    }
+
     let search_manager = Arc::new(SearchManager::new());
 
     tauri::Builder::default()

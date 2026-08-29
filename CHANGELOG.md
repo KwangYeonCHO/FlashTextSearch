@@ -5,6 +5,13 @@ All notable changes to **FlashText Search** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.2] - 2026-08-29
+
+### Fixed & Architecture
+- **In-Place Atomic Hot-Swap (Zero-Script & 100% Silent Update)**: Completely eliminated external `.bat`/`.vbs` scripts and CMD popups. Utilized Windows kernel file renaming capability to perform atomic hot-swap and relaunch in pure Rust within milliseconds.
+
+---
+
 ## [v0.4.1] - 2026-08-29
 
 ### Fixed & I18n

@@ -158,15 +158,26 @@ impl UpdaterService {
             tag
         );
 
-        // 使用 curl 下载
-        let download_output = Command::new("curl")
-            .args(&[
-                "-L",
-                "-s",
-                "-o",
-                target_download_file.to_str().unwrap_or("FlashTextSearch.exe"),
-                &direct_download_url,
-            ])
+        // 1. 使用带有 CREATE_NO_WINDOW 标志的 curl 静默下载（彻底消除下载时弹出 CMD 窗口）
+        let mut download_cmd = Command::new("curl");
+        download_cmd.args(&[
+            "-L",
+            "-s",
+            "--connect-timeout",
+            "10",
+            "-o",
+            target_download_file.to_str().unwrap_or("FlashTextSearch.exe"),
+            &direct_download_url,
+        ]);
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            download_cmd.creation_flags(CREATE_NO_WINDOW);
+        }
+
+        let download_output = download_cmd
             .output()
             .map_err(|e| format!("下载 Release 失败: {}", e))?;
 
@@ -174,40 +185,26 @@ impl UpdaterService {
             return Err("下载更新程序失败".to_string());
         }
 
-        // 2. 生成 Windows 100% 静默更新脚本（基于原生 Windows GUI WScript，彻底杜绝 CMD 黑框弹出）
-        let script_path = temp_dir.join("flashtext_updater.vbs");
-        let current_pid = std::process::id();
+        // 2. 原生 Windows 原子级重命名热替换 (Windows 允许重命名运行中的 exe)
+        let old_exe = current_exe.with_extension("exe.old");
+        let _ = fs::remove_file(&old_exe);
 
-        let vbs_content = format!(
-            "Set WshShell = CreateObject(\"WScript.Shell\")\r\n\
-            WScript.Sleep 1000\r\n\
-            WshShell.Run \"taskkill /F /PID {}\", 0, True\r\n\
-            WScript.Sleep 500\r\n\
-            Set fso = CreateObject(\"Scripting.FileSystemObject\")\r\n\
-            fso.CopyFile \"{}\", \"{}\", True\r\n\
-            WshShell.Run \"\"\"{}\"\"\", 1, False\r\n\
-            fso.DeleteFile WScript.ScriptFullName\r\n",
-            current_pid,
-            target_download_file.display().to_string().replace('\\', "\\\\"),
-            current_exe.display().to_string().replace('\\', "\\\\"),
-            current_exe.display().to_string().replace('\\', "\\\\")
-        );
+        // 将当前正在运行的可执行文件重命名为 .old
+        fs::rename(&current_exe, &old_exe).map_err(|e| format!("备份当前程序失败: {}", e))?;
 
-        fs::write(&script_path, vbs_content).map_err(|e| format!("写入更新脚本失败: {}", e))?;
-
-        // 3. 使用 wscript.exe 静默拉起后台更新服务，完全无控制台黑框弹出
-        #[cfg(target_os = "windows")]
-        {
-            use std::os::windows::process::CommandExt;
-            const CREATE_NO_WINDOW: u32 = 0x08000000;
-            Command::new("wscript.exe")
-                .args(&["//B", "//Nologo", script_path.to_str().unwrap_or("flashtext_updater.vbs")])
-                .creation_flags(CREATE_NO_WINDOW)
-                .spawn()
-                .map_err(|e| format!("启动静默自动更新失败: {}", e))?;
+        // 将下载好的新版本直接复制到原路径 (此时原路径已被释放，瞬间成功)
+        if let Err(e) = fs::copy(&target_download_file, &current_exe) {
+            // 容错恢复
+            let _ = fs::rename(&old_exe, &current_exe);
+            return Err(format!("写入新版本程序失败: {}", e));
         }
 
-        // 4. 立即干净退出当前旧版程序
+        // 3. 直接无缝启动新版本程序 (零窗口、零脚本、零黑框)
+        Command::new(&current_exe)
+            .spawn()
+            .map_err(|e| format!("启动新版本程序失败: {}", e))?;
+
+        // 4. 立即优雅退出当前旧版本进程
         std::process::exit(0);
     }
 
