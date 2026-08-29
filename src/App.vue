@@ -55,7 +55,7 @@ import SearchResultsList from "./components/SearchResultsList.vue";
 import DocumentPreviewPane from "./components/DocumentPreviewPane.vue";
 import StatusBar from "./components/StatusBar.vue";
 import UpdateModal from "./components/UpdateModal.vue";
-import { t } from "./i18n";
+import { t, currentLang } from "./i18n";
 import type {
   FileMatchResult,
   MatchItem,
@@ -160,6 +160,9 @@ const handleMatchChange = (match: MatchItem) => {
 
 // 初始化 Tauri 事件监听通道
 onMounted(async () => {
+  // 同步初始化系统托盘右键菜单语言
+  invoke("update_tray_menu_language", { lang: currentLang.value }).catch(() => {});
+
   // 启动 3 秒后后台完全异步检查更新，零卡顿
   setTimeout(() => {
     checkForUpdates(true).catch(() => {});

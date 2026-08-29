@@ -1,4 +1,5 @@
 import { ref, computed } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 
 export type LanguageKey = "zh" | "ko" | "en";
 
@@ -329,6 +330,9 @@ export const currentLang = ref<LanguageKey>(savedLang);
 export const setLanguage = (lang: LanguageKey) => {
   currentLang.value = lang;
   localStorage.setItem("flashtext_lang", lang);
+  invoke("update_tray_menu_language", { lang }).catch((err: any) => {
+    console.warn("更新托盘语言失败:", err);
+  });
 };
 
 export const t = computed(() => translations[currentLang.value] || translations.zh);

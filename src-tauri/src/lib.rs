@@ -85,8 +85,30 @@ async fn install_app_update(tag_name: String) -> Result<(), String> {
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, WindowEvent, LogicalSize, Size,
+    LogicalSize, Manager, Size, WindowEvent,
 };
+
+/// 系统托盘菜单句柄状态，用于前端切换语言时动态更新托盘菜单文本
+pub struct TrayMenuState {
+    pub show_item: MenuItem<tauri::Wry>,
+    pub reset_item: MenuItem<tauri::Wry>,
+    pub quit_item: MenuItem<tauri::Wry>,
+}
+
+/// 命令：根据当前界面语言动态更新系统托盘右键菜单文字
+#[tauri::command]
+fn update_tray_menu_language(state: tauri::State<TrayMenuState>, lang: String) -> Result<(), String> {
+    let (show_text, reset_text, quit_text) = match lang.as_str() {
+        "ko" => ("메인 창 열기", "화면 위치 초기화 (중앙 복원)", "프로그램 종료"),
+        "en" => ("Open Main Window", "Reset Window Position (Center)", "Exit Application"),
+        _ => ("显示主窗口", "恢复窗口显示 (居中复位)", "退出程序"),
+    };
+
+    let _ = state.show_item.set_text(show_text);
+    let _ = state.reset_item.set_text(reset_text);
+    let _ = state.quit_item.set_text(quit_text);
+    Ok(())
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -121,7 +143,8 @@ pub fn run() {
             open_in_file_manager,
             open_with_system_app,
             check_app_update,
-            install_app_update
+            install_app_update,
+            update_tray_menu_language
         ])
         // 2. 拦截窗口关闭事件：点击 X 最小化隐藏到系统托盘，不真正退出
         .on_window_event(|window, event| {
@@ -132,11 +155,18 @@ pub fn run() {
         })
         // 3. 构建系统托盘与右键菜单（右键退出才算真正退出）
         .setup(|app| {
-            let show_item = MenuItem::with_id(app, "show", "显示主窗口 / Open Window", true, None::<&str>)?;
-            let reset_item = MenuItem::with_id(app, "reset_position", "恢复窗口显示 (居中复位) / Reset Window", true, None::<&str>)?;
+            let show_item = MenuItem::with_id(app, "show", "显示主窗口", true, None::<&str>)?;
+            let reset_item = MenuItem::with_id(app, "reset_position", "恢复窗口显示 (居中复位)", true, None::<&str>)?;
             let separator = PredefinedMenuItem::separator(app)?;
-            let quit_item = MenuItem::with_id(app, "quit", "退出程序 / Exit", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "退出程序", true, None::<&str>)?;
             let tray_menu = Menu::with_items(app, &[&show_item, &reset_item, &separator, &quit_item])?;
+
+            // 注册托盘菜单状态到 Tauri 上下文供前端实时动态修改文字
+            app.manage(TrayMenuState {
+                show_item: show_item.clone(),
+                reset_item: reset_item.clone(),
+                quit_item: quit_item.clone(),
+            });
 
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
