@@ -174,39 +174,40 @@ impl UpdaterService {
             return Err("下载更新程序失败".to_string());
         }
 
-        // 生成 Windows 更新替换脚本
-        let script_path = temp_dir.join("flashtext_updater.bat");
+        // 2. 生成 Windows 100% 静默更新脚本（基于原生 Windows GUI WScript，彻底杜绝 CMD 黑框弹出）
+        let script_path = temp_dir.join("flashtext_updater.vbs");
         let current_pid = std::process::id();
 
-        let bat_content = format!(
-            "@echo off\r\n\
-            timeout /t 1 /nobreak > nul\r\n\
-            taskkill /F /PID {} > nul 2>&1\r\n\
-            timeout /t 1 /nobreak > nul\r\n\
-            copy /Y \"{}\" \"{}\" > nul\r\n\
-            start \"\" \"{}\"\r\n\
-            del \"%~f0\" > nul 2>&1\r\n\
-            exit\r\n",
+        let vbs_content = format!(
+            "Set WshShell = CreateObject(\"WScript.Shell\")\r\n\
+            WScript.Sleep 1000\r\n\
+            WshShell.Run \"taskkill /F /PID {}\", 0, True\r\n\
+            WScript.Sleep 500\r\n\
+            Set fso = CreateObject(\"Scripting.FileSystemObject\")\r\n\
+            fso.CopyFile \"{}\", \"{}\", True\r\n\
+            WshShell.Run \"\"\"{}\"\"\", 1, False\r\n\
+            fso.DeleteFile WScript.ScriptFullName\r\n",
             current_pid,
-            target_download_file.display(),
-            current_exe.display(),
-            current_exe.display()
+            target_download_file.display().to_string().replace('\\', "\\\\"),
+            current_exe.display().to_string().replace('\\', "\\\\"),
+            current_exe.display().to_string().replace('\\', "\\\\")
         );
 
-        fs::write(&script_path, bat_content).map_err(|e| format!("写入更新脚本失败: {}", e))?;
+        fs::write(&script_path, vbs_content).map_err(|e| format!("写入更新脚本失败: {}", e))?;
 
-        // 启动更新脚本并退出当前进程
+        // 3. 使用 wscript.exe 静默拉起后台更新服务，完全无控制台黑框弹出
         #[cfg(target_os = "windows")]
         {
             use std::os::windows::process::CommandExt;
             const CREATE_NO_WINDOW: u32 = 0x08000000;
-            Command::new("cmd")
-                .args(&["/C", script_path.to_str().unwrap_or("flashtext_updater.bat")])
+            Command::new("wscript.exe")
+                .args(&["//B", "//Nologo", script_path.to_str().unwrap_or("flashtext_updater.vbs")])
                 .creation_flags(CREATE_NO_WINDOW)
                 .spawn()
-                .map_err(|e| format!("启动自动更新脚本失败: {}", e))?;
+                .map_err(|e| format!("启动静默自动更新失败: {}", e))?;
         }
 
+        // 4. 立即干净退出当前旧版程序
         std::process::exit(0);
     }
 

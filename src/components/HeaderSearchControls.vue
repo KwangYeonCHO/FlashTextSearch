@@ -5,11 +5,18 @@
       <!-- 品牌与 Logo -->
       <div class="flex items-center gap-2.5">
         <img src="/logo.png" alt="Logo" class="w-7 h-7 rounded-lg shadow-sm border shrink-0" style="border-color: var(--border-subtle)" />
-        <div class="flex items-baseline gap-2">
+        <div class="flex items-center gap-2">
           <span class="text-sm font-black tracking-wide bg-gradient-to-r from-sky-500 via-indigo-400 to-amber-500 bg-clip-text text-transparent">
             {{ t.appTitle }}
           </span>
-          <span class="text-[11px] hidden sm:inline-block font-medium" style="color: var(--text-muted)">
+          <!-- 精致版本号徽章 -->
+          <span
+            class="px-1.5 py-0.2 rounded-md font-mono text-[10px] font-bold border transition"
+            style="background-color: var(--match-badge-bg); color: var(--match-badge-text); border-color: var(--match-badge-border);"
+          >
+            v0.3.2
+          </span>
+          <span class="text-[11px] hidden md:inline-block font-medium" style="color: var(--text-muted)">
             {{ t.appSubtitle }}
           </span>
         </div>
