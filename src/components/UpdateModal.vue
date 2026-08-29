@@ -41,14 +41,30 @@
 
       <!-- 更新日志内容区域 -->
       <div class="my-4">
-        <h4 class="text-xs font-semibold mb-1.5" style="color: var(--text-body)">
-          {{ updateInfo?.releaseTitle }}
-        </h4>
+        <div class="flex items-center justify-between mb-1.5">
+          <h4 class="text-xs font-semibold truncate max-w-[220px]" style="color: var(--text-body)">
+            {{ displayReleaseTitle }}
+          </h4>
+
+          <!-- 多语言日志切换标签 -->
+          <div v-if="hasMultiLangNotes" class="flex items-center gap-1">
+            <button
+              v-for="l in availableLangs"
+              :key="l.key"
+              class="px-1.5 py-0.5 rounded text-[10px] font-medium transition cursor-pointer"
+              :class="activeNoteLang === l.key ? 'bg-sky-500/20 text-sky-400 font-bold border border-sky-500/30' : 'text-slate-400 hover:text-slate-200'"
+              @click="activeNoteLang = l.key"
+            >
+              {{ l.icon }}
+            </button>
+          </div>
+        </div>
+
         <div
           class="max-h-48 overflow-y-auto rounded-xl p-3 text-xs font-mono border whitespace-pre-wrap leading-relaxed select-text"
           style="background-color: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-muted)"
         >
-          {{ updateInfo?.releaseNotes || '包含常规性能优化与问题修复。' }}
+          {{ displayReleaseNotes }}
         </div>
       </div>
 
@@ -91,10 +107,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { Sparkles, Download, X, Loader2, AlertCircle } from "@lucide/vue";
-import { t } from "../i18n";
+import { t, currentLang, type LanguageKey } from "../i18n";
 import type { UpdateCheckResult } from "../types/search";
 
 const props = defineProps<{
@@ -108,6 +124,127 @@ const emit = defineEmits<{
 
 const isInstalling = ref(false);
 const errorMessage = ref<string | null>(null);
+
+// 当前更新日志显示的语言，默认跟随软件界面语言
+const activeNoteLang = ref<LanguageKey>(currentLang.value);
+
+watch(
+  () => currentLang.value,
+  (newLang) => {
+    activeNoteLang.value = newLang;
+  }
+);
+
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (open) {
+      activeNoteLang.value = currentLang.value;
+      errorMessage.value = null;
+      isInstalling.value = false;
+    }
+  }
+);
+
+const availableLangs = [
+  { key: "zh" as LanguageKey, icon: "🇨🇳 中文" },
+  { key: "ko" as LanguageKey, icon: "🇰🇷 한국어" },
+  { key: "en" as LanguageKey, icon: "🇺🇸 English" },
+];
+
+/**
+ * 智能解析多语言 Release 内容
+ */
+const parseMultilingualContent = (raw: string | undefined, targetLang: LanguageKey): string => {
+  if (!raw) return "";
+
+  // 1. 优先提取 <!-- lang:ko --> ... <!-- /lang:ko --> 标签内容
+  const tagRegex = new RegExp(`<!--\\s*lang:${targetLang}\\s*-->([\\s\\S]*?)<!--\\s*/lang:${targetLang}\\s*-->`, "i");
+  const tagMatch = raw.match(tagRegex);
+  if (tagMatch && tagMatch[1].trim()) {
+    return tagMatch[1].trim();
+  }
+
+  // 2. 匹配 Markdown 分段标题，如 ## 🇰🇷 或 ## 한국어
+  const sections = splitMarkdownByLangHeaders(raw);
+  if (sections[targetLang]) {
+    return sections[targetLang].trim();
+  }
+
+  // 3. 兜底提取：如果没有该语言的独立段落，直接返回全文
+  return raw.trim();
+};
+
+/**
+ * 判断 Release Notes 是否包含多语言标记
+ */
+const hasMultiLangNotes = computed(() => {
+  const raw = props.updateInfo?.releaseNotes || "";
+  return (
+    raw.includes("<!-- lang:") ||
+    raw.includes("🇰🇷") ||
+    raw.includes("🇨🇳") ||
+    raw.includes("🇺🇸") ||
+    raw.includes("[KO]") ||
+    raw.includes("[ZH]") ||
+    raw.includes("[EN]")
+  );
+});
+
+/**
+ * 分解 Markdown 中的多语言段落
+ */
+const splitMarkdownByLangHeaders = (text: string): Record<string, string> => {
+  const result: Record<string, string> = {};
+  const lines = text.split("\n");
+  let currentLangKey: string | null = null;
+  let currentBuffer: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.includes("🇰🇷") || trimmed.toLowerCase().includes("[ko]") || trimmed.includes("한국어")) {
+      if (currentLangKey && currentBuffer.length) {
+        result[currentLangKey] = currentBuffer.join("\n");
+      }
+      currentLangKey = "ko";
+      currentBuffer = [line];
+    } else if (trimmed.includes("🇨🇳") || trimmed.toLowerCase().includes("[zh]") || trimmed.includes("中文")) {
+      if (currentLangKey && currentBuffer.length) {
+        result[currentLangKey] = currentBuffer.join("\n");
+      }
+      currentLangKey = "zh";
+      currentBuffer = [line];
+    } else if (trimmed.includes("🇺🇸") || trimmed.toLowerCase().includes("[en]") || trimmed.includes("English")) {
+      if (currentLangKey && currentBuffer.length) {
+        result[currentLangKey] = currentBuffer.join("\n");
+      }
+      currentLangKey = "en";
+      currentBuffer = [line];
+    } else if (currentLangKey) {
+      currentBuffer.push(line);
+    }
+  }
+
+  if (currentLangKey && currentBuffer.length) {
+    result[currentLangKey] = currentBuffer.join("\n");
+  }
+
+  return result;
+};
+
+// 当前展示的 Release 标题
+const displayReleaseTitle = computed(() => {
+  const raw = props.updateInfo?.releaseTitle || "";
+  const parsed = parseMultilingualContent(raw, activeNoteLang.value);
+  return parsed || raw || `${props.updateInfo?.latestVersion || ""} Update`;
+});
+
+// 当前展示的 Release 更新说明
+const displayReleaseNotes = computed(() => {
+  const raw = props.updateInfo?.releaseNotes || "";
+  const parsed = parseMultilingualContent(raw, activeNoteLang.value);
+  return parsed || raw || "包含常规性能优化与问题修复。";
+});
 
 const closeModal = () => {
   if (!isInstalling.value) {
