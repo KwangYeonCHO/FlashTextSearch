@@ -66,8 +66,12 @@ export interface FileMatchResult {
  * 实时搜索进度状态
  */
 export interface SearchProgress {
+  /** 预计需要扫描的文件总数 */
+  totalFiles: number;
   /** 已扫描的文件总数 */
   filesScanned: number;
+  /** 扫描进度百分比 (0 ~ 100) */
+  progressPercent: number;
   /** 包含匹配项的文件数量 */
   filesMatched: number;
   /** 累计命中的匹配项总数 */
@@ -78,7 +82,7 @@ export interface SearchProgress {
   isFinished: boolean;
   /** 是否被用户取消 */
   isCancelled: boolean;
-  /** 当前正在扫描的文件 */
+  /** 当前正在扫描的文件名 */
   currentFile?: string;
 }
 

@@ -15,7 +15,7 @@
       >
         <SheetIcon class="w-3.5 h-3.5" />
         <span>{{ sheet.sheetName }}</span>
-        <span class="text-[10px] text-slate-500">({{ sheet.totalRows }} 行)</span>
+        <span class="text-[10px] text-slate-500">({{ sheet.totalRows }} {{ t.sheetRows }})</span>
       </button>
     </div>
 
@@ -74,7 +74,7 @@
 
       <!-- 空表格提示 -->
       <div v-else class="h-full flex items-center justify-center text-slate-500">
-        当前工作表无数据
+        {{ t.noSheetData }}
       </div>
     </div>
   </div>
@@ -83,6 +83,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue";
 import { Table as SheetIcon } from "@lucide/vue";
+import { t } from "../i18n";
 import type { ExcelWorkbookContent } from "../types/search";
 
 const props = defineProps<{

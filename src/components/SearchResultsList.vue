@@ -4,22 +4,22 @@
     <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between shrink-0 bg-slate-900/60">
       <div class="flex items-center gap-2 text-xs text-slate-300 font-medium">
         <ListFilter class="w-3.5 h-3.5 text-sky-400" />
-        <span>搜索结果 ({{ results.length }} 个文件, {{ totalMatchCount }} 处命中)</span>
+        <span>{{ t.searchResults }} ({{ results.length }} {{ t.files }}, {{ totalMatchCount }} {{ t.matches }})</span>
       </div>
       <div class="flex items-center gap-1.5">
         <button
           class="text-[11px] px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition cursor-pointer"
-          title="全部展开"
+          :title="t.expandAll"
           @click="expandAll"
         >
-          全部展开
+          {{ t.expandAll }}
         </button>
         <button
           class="text-[11px] px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition cursor-pointer"
-          title="全部折叠"
+          :title="t.collapseAll"
           @click="collapseAll"
         >
-          全部折叠
+          {{ t.collapseAll }}
         </button>
       </div>
     </div>
@@ -41,8 +41,8 @@
         class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500"
       >
         <SearchX class="w-12 h-12 text-slate-600 mb-3" />
-        <p class="text-sm font-medium text-slate-400">未找到匹配内容</p>
-        <p class="text-xs mt-1 text-slate-600">请尝试更换搜索目录、关键字或检查扩展名过滤</p>
+        <p class="text-sm font-medium text-slate-400">{{ t.noResults }}</p>
+        <p class="text-xs mt-1 text-slate-600">{{ t.noResultsTip }}</p>
       </div>
 
       <!-- 文件结果卡片列表 -->
@@ -81,7 +81,7 @@
                       : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
                   "
                 >
-                  {{ fileResult.matches.length }} 处
+                  {{ fileResult.matches.length }} {{ t.hitsCount }}
                 </span>
               </div>
               <div class="text-[10px] text-slate-500 truncate" :title="fileResult.filePath">
@@ -148,6 +148,7 @@ import {
   File,
   ChevronDown,
 } from "@lucide/vue";
+import { t } from "../i18n";
 import type { FileMatchResult, MatchItem } from "../types/search";
 
 const props = defineProps<{

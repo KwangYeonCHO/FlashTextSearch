@@ -59,7 +59,9 @@ const selectedFile = ref<FileMatchResult | null>(null);
 const selectedMatch = ref<MatchItem | null>(null);
 
 const progress = ref<SearchProgress>({
+  totalFiles: 0,
   filesScanned: 0,
+  progressPercent: 0,
   filesMatched: 0,
   totalMatches: 0,
   elapsedMs: 0,
@@ -79,7 +81,9 @@ const handleStartSearch = async (query: SearchQuery) => {
   selectedMatch.value = null;
 
   progress.value = {
+    totalFiles: 0,
     filesScanned: 0,
+    progressPercent: 0,
     filesMatched: 0,
     totalMatches: 0,
     elapsedMs: 0,

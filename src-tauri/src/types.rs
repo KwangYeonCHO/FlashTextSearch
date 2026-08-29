@@ -69,8 +69,12 @@ pub struct FileMatchResult {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchProgress {
-    /// 已扫描的文件总数
+    /// 预计需要扫描的文件总数（用于计算进度百分比）
+    pub total_files: usize,
+    /// 已扫描的文件数
     pub files_scanned: usize,
+    /// 当前进度百分比 (0.0 ~ 100.0)
+    pub progress_percent: f64,
     /// 包含匹配项的文件数量
     pub files_matched: usize,
     /// 累计命中的匹配项总数

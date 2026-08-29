@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full flex flex-col glass-panel overflow-hidden bg-[#090d16]">
+  <div class="h-full flex flex-col glass-panel overflow-hidden bg-[var(--bg-editor)]">
     <!-- 预览区顶部工具栏 -->
     <div
       v-if="selectedFile"
@@ -26,7 +26,7 @@
               v-if="textContent?.isTruncated"
               class="text-[10px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded font-medium shrink-0"
             >
-              前 20,000 行预览
+              {{ t.truncatedNotice }}
             </span>
           </div>
           <div class="text-[10px] text-slate-500 truncate" :title="selectedFile.filePath">
@@ -41,7 +41,7 @@
         class="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-xl border border-slate-700/60 shadow-inner"
       >
         <span class="text-[11px] text-slate-400 font-medium">
-          匹配项:
+          {{ t.matchIndex }}
           <span class="text-amber-400 font-bold font-mono">
             {{ activeMatchIndex }}
           </span>
@@ -52,7 +52,7 @@
         <button
           class="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
           :disabled="selectedFile.matches.length <= 1"
-          title="跳转到上一个匹配项 (Shift + F3)"
+          :title="t.prevMatchTip"
           @click="jumpPrevMatch"
         >
           <ChevronUp class="w-4 h-4" />
@@ -62,7 +62,7 @@
         <button
           class="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
           :disabled="selectedFile.matches.length <= 1"
-          title="跳转到下一个匹配项 (F3)"
+          :title="t.nextMatchTip"
           @click="jumpNextMatch"
         >
           <ChevronDown class="w-4 h-4" />
@@ -73,20 +73,20 @@
       <div class="flex items-center gap-1.5 shrink-0">
         <button
           class="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition flex items-center gap-1 cursor-pointer"
-          title="在 Windows 资源管理器中高亮定位"
+          :title="t.locateInExplorer"
           @click="openInExplorer"
         >
           <FolderSearch class="w-3.5 h-3.5 text-sky-400" />
-          <span>定位</span>
+          <span>{{ t.locateInExplorer }}</span>
         </button>
 
         <button
           class="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition flex items-center gap-1 cursor-pointer"
-          title="使用系统默认程序打开该文件"
+          :title="t.openWithApp"
           @click="openWithSystemApp"
         >
           <ExternalLink class="w-3.5 h-3.5 text-emerald-400" />
-          <span>打开</span>
+          <span>{{ t.openWithApp }}</span>
         </button>
       </div>
     </div>
@@ -99,7 +99,7 @@
         class="absolute inset-0 bg-[#090d16]/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-slate-400"
       >
         <Loader2 class="w-8 h-8 animate-spin text-sky-400 mb-2" />
-        <span class="text-xs font-medium">正在极速加载文档内容...</span>
+        <span class="text-xs font-medium">{{ t.loadingDocument }}</span>
       </div>
 
       <!-- 错误提示 -->
@@ -113,7 +113,7 @@
           class="mt-4 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg border border-slate-600 transition"
           @click="openWithSystemApp"
         >
-          使用系统默认应用打开该文档
+          {{ t.openDefaultApp }}
         </button>
       </div>
 
@@ -123,9 +123,9 @@
         class="h-full flex flex-col items-center justify-center text-center p-8 text-slate-500"
       >
         <Eye class="w-14 h-14 text-slate-700 mb-3" />
-        <p class="text-sm font-medium text-slate-400">选择左侧搜索结果查看文档预览</p>
+        <p class="text-sm font-medium text-slate-400">{{ t.selectFileTip }}</p>
         <p class="text-xs mt-1 text-slate-600">
-          支持实时平滑跳转到指定命中行、多匹配项导航与 Excel 工作表单元格高亮
+          {{ t.selectFileSubTip }}
         </p>
       </div>
 
@@ -167,6 +167,7 @@ import {
   AlertCircle,
   Eye,
 } from "@lucide/vue";
+import { t } from "../i18n";
 import MonacoEditorViewer from "./MonacoEditorViewer.vue";
 import ExcelSheetViewer from "./ExcelSheetViewer.vue";
 import type {

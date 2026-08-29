@@ -110,6 +110,22 @@ impl SearchEngine {
                 }
             }
 
+            let total_files = file_entries.len();
+
+            // 发送初始发现文件进度事件
+            let initial_progress = SearchProgress {
+                total_files,
+                files_scanned: 0,
+                progress_percent: 0.0,
+                files_matched: 0,
+                total_matches: 0,
+                elapsed_ms: start_time.elapsed().as_millis() as u64,
+                is_finished: false,
+                is_cancelled: false,
+                current_file: None,
+            };
+            let _ = app_handle.emit("search-progress", initial_progress);
+
             // 使用 Rayon 并行处理所有文件匹配，并分批流式发送给前端
             let chunk_size = 64;
             let max_file_size_bytes = query.max_file_size_mb.unwrap_or(200) * 1024 * 1024;
@@ -121,6 +137,11 @@ impl SearchEngine {
                 if cancel_token.load(Ordering::Relaxed) {
                     break;
                 }
+
+                let current_chunk_first_file = chunk
+                    .first()
+                    .and_then(|p| p.file_name())
+                    .map(|s| s.to_string_lossy().to_string());
 
                 // 块内并行处理
                 let chunk_results: Vec<FileMatchResult> = chunk
@@ -166,21 +187,32 @@ impl SearchEngine {
                     batch_buffer.push(res);
                 }
 
+                let scanned = files_scanned.load(Ordering::Relaxed);
+                let percent = if total_files > 0 {
+                    ((scanned as f64 / total_files as f64) * 100.0).min(100.0)
+                } else {
+                    100.0
+                };
+
                 // 限制发送频率（每收集 50 条或每隔 40ms 发送一次 batch），防止高频 IPC 卡顿
-                if batch_buffer.len() >= 50 || (last_emit_time.elapsed().as_millis() >= 40 && !batch_buffer.is_empty()) {
+                if batch_buffer.len() >= 50 || (last_emit_time.elapsed().as_millis() >= 40 && !batch_buffer.is_empty()) || scanned == total_files {
                     let to_send = std::mem::take(&mut batch_buffer);
-                    let _ = app_handle.emit("search-result-batch", to_send);
+                    if !to_send.is_empty() {
+                        let _ = app_handle.emit("search-result-batch", to_send);
+                    }
                     last_emit_time = Instant::now();
 
-                    // 发送实时进度更新
+                    // 发送实时进度更新（包含百分比与当前文件名）
                     let progress = SearchProgress {
-                        files_scanned: files_scanned.load(Ordering::Relaxed),
+                        total_files,
+                        files_scanned: scanned,
+                        progress_percent: (percent * 10.0).round() / 10.0,
                         files_matched: files_matched.load(Ordering::Relaxed),
                         total_matches: total_matches.load(Ordering::Relaxed),
                         elapsed_ms: start_time.elapsed().as_millis() as u64,
                         is_finished: false,
                         is_cancelled: false,
-                        current_file: None,
+                        current_file: current_chunk_first_file,
                     };
                     let _ = app_handle.emit("search-progress", progress);
                 }
@@ -193,8 +225,17 @@ impl SearchEngine {
 
             // 发送最终完成事件
             let is_cancelled = cancel_token.load(Ordering::Relaxed);
+            let final_scanned = files_scanned.load(Ordering::Relaxed);
+            let final_percent = if is_cancelled {
+                if total_files > 0 { ((final_scanned as f64 / total_files as f64) * 100.0).min(100.0) } else { 0.0 }
+            } else {
+                100.0
+            };
+
             let final_progress = SearchProgress {
-                files_scanned: files_scanned.load(Ordering::Relaxed),
+                total_files,
+                files_scanned: final_scanned,
+                progress_percent: (final_percent * 10.0).round() / 10.0,
                 files_matched: files_matched.load(Ordering::Relaxed),
                 total_matches: total_matches.load(Ordering::Relaxed),
                 elapsed_ms: start_time.elapsed().as_millis() as u64,

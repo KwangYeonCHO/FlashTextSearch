@@ -1,46 +1,101 @@
 @import "tailwindcss";
 
 @layer base {
-  :root {
-    --bg-dark: #0f172a;
+  :root,
+  [data-theme="dark-slate"] {
+    --bg-base: #090d16;
+    --bg-header: rgba(17, 24, 39, 0.85);
     --bg-surface: rgba(30, 41, 59, 0.7);
     --bg-surface-hover: rgba(51, 65, 85, 0.8);
+    --bg-card: rgba(30, 41, 59, 0.5);
+    --bg-editor: #0b101b;
     --border-subtle: rgba(255, 255, 255, 0.08);
-    --accent-blue: #38bdf8;
-    --accent-indigo: #6366f1;
-    --accent-amber: #f59e0b;
-    --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+    --border-card: rgba(255, 255, 255, 0.06);
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --accent-primary: #38bdf8;
+    --accent-secondary: #6366f1;
+    --accent-highlight: #f59e0b;
+  }
+
+  [data-theme="midnight-blue"] {
+    --bg-base: #050b18;
+    --bg-header: rgba(10, 25, 50, 0.85);
+    --bg-surface: rgba(15, 35, 70, 0.7);
+    --bg-surface-hover: rgba(25, 50, 95, 0.8);
+    --bg-card: rgba(15, 30, 60, 0.5);
+    --bg-editor: #060e20;
+    --border-subtle: rgba(99, 140, 255, 0.15);
+    --border-card: rgba(99, 140, 255, 0.1);
+    --text-main: #f0f6ff;
+    --text-muted: #8da4c4;
+    --accent-primary: #60a5fa;
+    --accent-secondary: #818cf8;
+    --accent-highlight: #38bdf8;
+  }
+
+  [data-theme="obsidian-gold"] {
+    --bg-base: #0a0a0a;
+    --bg-header: rgba(20, 20, 20, 0.9);
+    --bg-surface: rgba(35, 35, 35, 0.75);
+    --bg-surface-hover: rgba(50, 50, 50, 0.85);
+    --bg-card: rgba(28, 28, 28, 0.6);
+    --bg-editor: #0d0d0d;
+    --border-subtle: rgba(245, 158, 11, 0.18);
+    --border-card: rgba(255, 255, 255, 0.08);
+    --text-main: #fef3c7;
+    --text-muted: #a3a3a3;
+    --accent-primary: #f59e0b;
+    --accent-secondary: #d97706;
+    --accent-highlight: #fbbf24;
+  }
+
+  [data-theme="light-crisp"] {
+    --bg-base: #f8fafc;
+    --bg-header: rgba(255, 255, 255, 0.95);
+    --bg-surface: rgba(241, 245, 249, 0.9);
+    --bg-surface-hover: rgba(226, 232, 240, 0.95);
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --bg-editor: #ffffff;
+    --border-subtle: rgba(0, 0, 0, 0.1);
+    --border-card: rgba(0, 0, 0, 0.08);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --accent-primary: #0284c7;
+    --accent-secondary: #4f46e5;
+    --accent-highlight: #d97706;
   }
 
   body {
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #090d16;
-    color: #f1f5f9;
+    background-color: var(--bg-base);
+    color: var(--text-main);
     overflow: hidden;
     user-select: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
 /* 玻璃拟态面板 */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.75);
+  background: var(--bg-header);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-color: var(--border-subtle);
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.5);
+  background: var(--bg-card);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-card);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  background: rgba(51, 65, 85, 0.65);
-  border-color: rgba(56, 189, 248, 0.3);
+  background: var(--bg-surface-hover);
+  border-color: var(--accent-primary);
   transform: translateY(-1px);
 }
 
@@ -94,3 +149,13 @@
   box-shadow: inset 0 0 0 2px #f59e0b !important;
   animation: pulse-highlight 1.2s ease-out;
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
